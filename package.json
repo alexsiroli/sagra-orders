@@ -9,9 +9,14 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:firebase:connection": "node src/scripts/testFirebaseSetup.js",
+    "test:firebase:setup": "node -e \"import('./src/scripts/testFirebaseSetup.js').then(m => m.testFirebaseSetup())\"",
+    "test:firebase:security": "node -e \"import('./src/scripts/testFirebaseSetup.js').then(m => m.testFirebaseSetup())\"",
+    "test:firebase:queries": "node -e \"import('./src/scripts/testFirebaseSetup.js').then(m => m.testFirebaseSetup())\""
   },
   "dependencies": {
+    "firebase": "^12.1.0",
     "idb": "^8.0.3",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

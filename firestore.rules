@@ -1,0 +1,71 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && getUserRole() == 'admin';
+    }
+    
+    function isCassa() {
+      return isAuthenticated() && getUserRole() == 'cassa';
+    }
+    
+    function isCucina() {
+      return isAuthenticated() && getUserRole() == 'cucina';
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // Users collection - users can read their own data, admins can read all
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow write: if isAdmin() || isOwner(userId);
+    }
+    
+    // Orders collection
+    match /orders/{orderId} {
+      allow read: if isAuthenticated() && (isAdmin() || isCassa() || isCucina());
+      allow create: if isAuthenticated() && (isAdmin() || isCassa());
+      allow update: if isAuthenticated() && (isAdmin() || isCassa() || isCucina());
+      allow delete: if isAdmin();
+    }
+    
+    // Menu collection
+    match /menu/{itemId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // Stats collection - only admins can modify
+    match /stats/{statId} {
+      allow read: if isAuthenticated() && (isAdmin() || isCassa() || isCucina());
+      allow write: if isAdmin();
+    }
+    
+    // Categories collection
+    match /categories/{categoryId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // Settings collection - only admins
+    match /settings/{settingId} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Audit log - only admins can read
+    match /audit_log/{logId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}
