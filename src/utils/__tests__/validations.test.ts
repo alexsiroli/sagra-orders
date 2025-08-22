@@ -146,7 +146,7 @@ describe('validateQuantity', () => {
         },
       ],
     };
-    
+
     const result = validateQuantity(100, unlimitedItem, mockComponents);
     expect(result.isValid).toBe(true);
   });
@@ -164,20 +164,16 @@ describe('validateQuantity', () => {
 
 describe('validateCartStock', () => {
   test('dovrebbe validare carrello con stock sufficiente', () => {
-    const cartItems = [
-      { menuItem: mockMenuItem, quantity: 2 },
-    ];
-    
+    const cartItems = [{ menuItem: mockMenuItem, quantity: 2 }];
+
     const result = validateCartStock(cartItems, mockComponents);
     expect(result.isValid).toBe(true);
     expect(result.missingComponents).toHaveLength(0);
   });
 
   test('dovrebbe rilevare stock insufficiente', () => {
-    const cartItems = [
-      { menuItem: mockMenuItem, quantity: 15 },
-    ];
-    
+    const cartItems = [{ menuItem: mockMenuItem, quantity: 15 }];
+
     const result = validateCartStock(cartItems, mockComponents);
     expect(result.isValid).toBe(false);
     expect(result.missingComponents.length).toBeGreaterThan(0);
@@ -188,7 +184,7 @@ describe('validateCartStock', () => {
       { menuItem: mockMenuItem, quantity: 3 },
       { menuItem: mockMenuItem, quantity: 3 },
     ];
-    
+
     const result = validateCartStock(cartItems, mockComponents);
     expect(result.isValid).toBe(false); // 6 > 5 per comp2
   });
@@ -221,7 +217,9 @@ describe('validateNote', () => {
 
   test('dovrebbe rilevare caratteri speciali', () => {
     const result = validateNote('Nota con <script> pericoloso');
-    expect(result.warnings.some(w => w.includes('Caratteri speciali'))).toBe(true);
+    expect(result.warnings.some(w => w.includes('Caratteri speciali'))).toBe(
+      true
+    );
   });
 });
 
@@ -238,7 +236,7 @@ describe('calculateOrderTotal', () => {
         isStaff: false,
       },
     ];
-    
+
     const result = calculateOrderTotal(cartItems);
     expect(result.total).toBe(1600); // 800 * 2
     expect(result.subtotal).toBe(1600);
@@ -254,7 +252,7 @@ describe('calculateOrderTotal', () => {
         isStaff: true,
       },
     ];
-    
+
     const result = calculateOrderTotal(cartItems);
     expect(result.total).toBe(0);
     expect(result.subtotal).toBe(0);
@@ -274,7 +272,7 @@ describe('calculateOrderTotal', () => {
         isStaff: true,
       },
     ];
-    
+
     const result = calculateOrderTotal(cartItems);
     expect(result.total).toBe(800);
     expect(result.discount).toBe(800);
@@ -303,7 +301,7 @@ describe('calculateChange', () => {
   test('dovrebbe rifiutare valori negativi', () => {
     const totalResult = calculateChange(-100, 1000);
     expect(totalResult.isValid).toBe(false);
-    
+
     const receivedResult = calculateChange(1000, -100);
     expect(receivedResult.isValid).toBe(false);
   });

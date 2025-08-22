@@ -61,7 +61,7 @@ export async function updateComponentStock(
   };
 
   try {
-    await runTransaction(db, async (transaction) => {
+    await runTransaction(db, async transaction => {
       const componentRef = doc(db, 'menu_components', request.componentId);
       const componentDoc = await transaction.get(componentRef);
 
@@ -70,7 +70,7 @@ export async function updateComponentStock(
       }
 
       const componentData = componentDoc.data() as MenuComponent;
-      
+
       // Se il componente è illimitato, non aggiornare stock
       if (componentData.is_illimitato) {
         result.success = true;
@@ -108,7 +108,8 @@ export async function updateComponentStock(
 
     return result;
   } catch (error) {
-    result.error = error instanceof Error ? error.message : 'Errore sconosciuto';
+    result.error =
+      error instanceof Error ? error.message : 'Errore sconosciuto';
     return result;
   }
 }
@@ -137,8 +138,8 @@ export async function updateComponentsStockBatch(
   }
 
   try {
-    await runTransaction(db, async (transaction) => {
-      const componentRefs = requests.map(req => 
+    await runTransaction(db, async transaction => {
+      const componentRefs = requests.map(req =>
         doc(db, 'menu_components', req.componentId)
       );
 
@@ -224,11 +225,11 @@ export async function updateComponentsStockBatch(
 
     result.success = true;
     return result;
-
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+    const errorMessage =
+      error instanceof Error ? error.message : 'Errore sconosciuto';
     result.errors.push(errorMessage);
-    
+
     // Aggiungi failed updates per tutti i componenti
     for (const request of requests) {
       result.failedUpdates.push(request.componentId);
@@ -275,8 +276,10 @@ export function createStockUpdateRequestsFromOrder(
     if (!menuItem) continue;
 
     for (const component of menuItem.componenti) {
-      const existingRequest = requests.find(r => r.componentId === component.component_id);
-      
+      const existingRequest = requests.find(
+        r => r.componentId === component.component_id
+      );
+
       if (existingRequest) {
         // Accumula la quantità se il componente è già presente
         existingRequest.quantityChange -= component.quantita * line.quantita;
@@ -320,8 +323,10 @@ export function createStockRestoreRequestsFromOrder(
     if (!menuItem) continue;
 
     for (const component of menuItem.componenti) {
-      const existingRequest = requests.find(r => r.componentId === component.component_id);
-      
+      const existingRequest = requests.find(
+        r => r.componentId === component.component_id
+      );
+
       if (existingRequest) {
         // Accumula la quantità se il componente è già presente
         existingRequest.quantityChange += component.quantita * line.quantita;
@@ -352,7 +357,10 @@ export async function validateStockUpdate(
     const componentDoc = await getDoc(componentRef);
 
     if (!componentDoc.exists()) {
-      return { valid: false, error: `Componente ${request.componentId} non trovato` };
+      return {
+        valid: false,
+        error: `Componente ${request.componentId} non trovato`,
+      };
     }
 
     const componentData = componentDoc.data() as MenuComponent;
@@ -399,7 +407,7 @@ export async function getCurrentStock(componentId: string): Promise<{
     }
 
     const componentData = componentDoc.data() as MenuComponent;
-    
+
     return {
       success: true,
       stock: componentData.giacenza,
@@ -408,7 +416,8 @@ export async function getCurrentStock(componentId: string): Promise<{
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Errore nel recupero stock',
+      error:
+        error instanceof Error ? error.message : 'Errore nel recupero stock',
     };
   }
 }

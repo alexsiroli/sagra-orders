@@ -105,7 +105,7 @@ export function validateQuantity(
 
   for (const component of menuItem.componenti) {
     const componentData = components.find(c => c.id === component.component_id);
-    
+
     if (!componentData) {
       result.errors.push(`Componente ${component.nome_snapshot} non trovato`);
       result.isValid = false;
@@ -154,7 +154,8 @@ export function validateQuantity(
   if (componentIssues.length > 0) {
     result.isValid = false;
     result.errors.push(...componentIssues);
-    result.maxQuantity = maxQuantityAllowed === Infinity ? 0 : maxQuantityAllowed;
+    result.maxQuantity =
+      maxQuantityAllowed === Infinity ? 0 : maxQuantityAllowed;
   }
 
   return result;
@@ -184,14 +185,17 @@ export function validateCartStock(
     for (const component of cartItem.menuItem.componenti) {
       const currentUsage = componentUsage.get(component.component_id) || 0;
       const additionalUsage = cartItem.quantity * component.quantita;
-      componentUsage.set(component.component_id, currentUsage + additionalUsage);
+      componentUsage.set(
+        component.component_id,
+        currentUsage + additionalUsage
+      );
     }
   }
 
   // Verifica stock per ogni componente utilizzato
   for (const [componentId, totalUsage] of componentUsage) {
     const componentData = components.find(c => c.id === componentId);
-    
+
     if (!componentData) {
       result.errors.push(`Componente con ID ${componentId} non trovato`);
       result.isValid = false;
@@ -245,11 +249,15 @@ export function validateNote(note: string): NoteValidationResult {
   };
 
   if (charCount > maxChars) {
-    result.errors.push(`Note troppo lunghe: ${charCount}/${maxChars} caratteri`);
+    result.errors.push(
+      `Note troppo lunghe: ${charCount}/${maxChars} caratteri`
+    );
   }
 
   if (charCount > maxChars * 0.9) {
-    result.warnings.push(`Note quasi al limite: ${charCount}/${maxChars} caratteri`);
+    result.warnings.push(
+      `Note quasi al limite: ${charCount}/${maxChars} caratteri`
+    );
   }
 
   // Validazione caratteri speciali
@@ -337,7 +345,7 @@ export function calculateChange(
 
   if (received < 0) {
     result.isValid = false;
-    result.error = 'L\'importo ricevuto non può essere negativo';
+    result.error = "L'importo ricevuto non può essere negativo";
     return result;
   }
 
@@ -412,14 +420,14 @@ export function validateCompleteOrder(
   // Validazione ogni item del carrello
   for (let i = 0; i < orderData.cartItems.length; i++) {
     const item = orderData.cartItems[i];
-    
+
     // Validazione quantità
     const qtyValidation = validateQuantity(
       item.quantity,
       item.menuItem,
       components
     );
-    
+
     if (!qtyValidation.isValid) {
       result.errors.push(`Riga ${i + 1}: ${qtyValidation.errors.join(', ')}`);
       result.isValid = false;
@@ -430,7 +438,9 @@ export function validateCompleteOrder(
     if (item.notes) {
       const lineNoteValidation = validateNote(item.notes);
       if (!lineNoteValidation.isValid) {
-        result.errors.push(`Riga ${i + 1} note: ${lineNoteValidation.errors.join(', ')}`);
+        result.errors.push(
+          `Riga ${i + 1} note: ${lineNoteValidation.errors.join(', ')}`
+        );
         result.isValid = false;
       }
     }
@@ -470,14 +480,14 @@ export function formatPrice(priceInCents: number): string {
 export function parsePrice(priceString: string): number {
   const cleaned = priceString.replace(/[€\s]/g, '').replace(',', '.');
   const price = parseFloat(cleaned);
-  
+
   if (isNaN(price)) return 0;
-  
+
   // Se non ci sono decimali, assume che sia in euro e converte in centesimi
   if (!cleaned.includes('.')) {
     return Math.round(price * 100);
   }
-  
+
   // Se ci sono decimali, assume che sia già nel formato corretto
   return Math.round(price * 100);
 }
@@ -499,7 +509,7 @@ export function validatePriceString(priceString: string): ValidationResult {
   }
 
   const price = parsePrice(priceString);
-  
+
   if (price < 0) {
     result.errors.push('Il prezzo non può essere negativo');
     result.isValid = false;

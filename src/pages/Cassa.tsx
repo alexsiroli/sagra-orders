@@ -193,13 +193,19 @@ const Cassa: React.FC = () => {
   const addToCart = (menuItem: MenuItem) => {
     // Calcola quantità attuale nel carrello per questo item
     const existingItem = cart.items.find(
-      item => item.menuItem.id === menuItem.id && !item.isStaff && !item.isPriority
+      item =>
+        item.menuItem.id === menuItem.id && !item.isStaff && !item.isPriority
     );
     const currentQuantity = existingItem?.quantity || 0;
-    
+
     // Valida se è possibile aggiungere una unità
-    const validation = validateQuantity(1, menuItem, menuComponents, currentQuantity);
-    
+    const validation = validateQuantity(
+      1,
+      menuItem,
+      menuComponents,
+      currentQuantity
+    );
+
     if (!validation.isValid) {
       alert(`❌ Impossibile aggiungere: ${validation.errors.join(', ')}`);
       return;
@@ -302,9 +308,9 @@ const Cassa: React.FC = () => {
 
   const calculateChangeAmount = () => {
     const changeResult = calculateChange(cart.total, cart.received);
-    setCart(prevCart => ({ 
-      ...prevCart, 
-      change: changeResult.isValid ? changeResult.change : 0 
+    setCart(prevCart => ({
+      ...prevCart,
+      change: changeResult.isValid ? changeResult.change : 0,
     }));
   };
 
