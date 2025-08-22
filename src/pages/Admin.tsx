@@ -94,7 +94,9 @@ const Admin: React.FC = () => {
   );
 
   // State per report e export
-  const [reportDateRange, setReportDateRange] = useState<'today' | 'week' | 'month' | 'custom'>('today');
+  const [reportDateRange, setReportDateRange] = useState<
+    'today' | 'week' | 'month' | 'custom'
+  >('today');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [reportData, setReportData] = useState<any>(null);
@@ -526,7 +528,7 @@ const Admin: React.FC = () => {
   const getDateRange = () => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
+
     switch (reportDateRange) {
       case 'today':
         return { start: today, end: now };
@@ -539,9 +541,9 @@ const Admin: React.FC = () => {
         return { start: monthStart, end: now };
       case 'custom':
         if (customStartDate && customEndDate) {
-          return { 
-            start: new Date(customStartDate), 
-            end: new Date(customEndDate + 'T23:59:59') 
+          return {
+            start: new Date(customStartDate),
+            end: new Date(customEndDate + 'T23:59:59'),
           };
         }
         return { start: today, end: now };
@@ -552,7 +554,7 @@ const Admin: React.FC = () => {
 
   const generateReport = () => {
     const { start, end } = getDateRange();
-    
+
     // Filtra ordini per periodo
     const filteredOrders = orders.filter(order => {
       const orderDate = order.created_at.toDate();
@@ -569,7 +571,7 @@ const Admin: React.FC = () => {
     const totalOrders = filteredOrders.length;
     const staffOrders = filteredOrders.filter(o => o.is_staff).length;
     const regularOrders = totalOrders - staffOrders;
-    
+
     const totalRevenue = filteredOrders.reduce((sum, order) => {
       if (!order.is_staff) {
         return sum + order.totale;
@@ -580,35 +582,48 @@ const Admin: React.FC = () => {
     const averageTicket = regularOrders > 0 ? totalRevenue / regularOrders : 0;
 
     // Raggruppa per articolo
-    const itemsSold = new Map<string, { quantity: number; revenue: number; staffQuantity: number }>();
-    
+    const itemsSold = new Map<
+      string,
+      { quantity: number; revenue: number; staffQuantity: number }
+    >();
+
     filteredOrderLines.forEach(line => {
       const itemId = line.menu_item_id;
-      const existing = itemsSold.get(itemId) || { quantity: 0, revenue: 0, staffQuantity: 0 };
-      
+      const existing = itemsSold.get(itemId) || {
+        quantity: 0,
+        revenue: 0,
+        staffQuantity: 0,
+      };
+
       existing.quantity += line.quantita;
-      
+
       if (line.is_staff) {
         existing.staffQuantity += line.quantita;
       } else {
         existing.revenue += line.prezzo_totale;
       }
-      
+
       itemsSold.set(itemId, existing);
     });
 
     // Raggruppa per categoria
-    const categoryStats = new Map<string, { quantity: number; revenue: number }>();
-    
+    const categoryStats = new Map<
+      string,
+      { quantity: number; revenue: number }
+    >();
+
     itemsSold.forEach((stats, itemId) => {
       const item = menuItems.find(i => i.id === itemId);
       if (item) {
         const categoryId = item.categoria_id;
-        const existing = categoryStats.get(categoryId) || { quantity: 0, revenue: 0 };
-        
+        const existing = categoryStats.get(categoryId) || {
+          quantity: 0,
+          revenue: 0,
+        };
+
         existing.quantity += stats.quantity;
         existing.revenue += stats.revenue;
-        
+
         categoryStats.set(categoryId, existing);
       }
     });
@@ -620,31 +635,35 @@ const Admin: React.FC = () => {
         staffOrders,
         regularOrders,
         totalRevenue,
-        averageTicket
+        averageTicket,
       },
       itemsSold: Array.from(itemsSold.entries()).map(([itemId, stats]) => {
         const item = menuItems.find(i => i.id === itemId);
         return {
           itemId,
           itemName: item?.nome || 'Articolo sconosciuto',
-          category: categories.find(c => c.id === item?.categoria_id)?.nome || 'Categoria sconosciuta',
+          category:
+            categories.find(c => c.id === item?.categoria_id)?.nome ||
+            'Categoria sconosciuta',
           totalQuantity: stats.quantity,
           staffQuantity: stats.staffQuantity,
           regularQuantity: stats.quantity - stats.staffQuantity,
-          revenue: stats.revenue
+          revenue: stats.revenue,
         };
       }),
-      categoryStats: Array.from(categoryStats.entries()).map(([categoryId, stats]) => {
-        const category = categories.find(c => c.id === categoryId);
-        return {
-          categoryId,
-          categoryName: category?.nome || 'Categoria sconosciuta',
-          totalQuantity: stats.quantity,
-          revenue: stats.revenue
-        };
-      }),
+      categoryStats: Array.from(categoryStats.entries()).map(
+        ([categoryId, stats]) => {
+          const category = categories.find(c => c.id === categoryId);
+          return {
+            categoryId,
+            categoryName: category?.nome || 'Categoria sconosciuta',
+            totalQuantity: stats.quantity,
+            revenue: stats.revenue,
+          };
+        }
+      ),
       orders: filteredOrders,
-      orderLines: filteredOrderLines
+      orderLines: filteredOrderLines,
     };
 
     setReportData(report);
@@ -652,19 +671,21 @@ const Admin: React.FC = () => {
 
   const exportToCSV = (data: any[], filename: string) => {
     if (data.length === 0) return;
-    
+
     const headers = Object.keys(data[0]);
     const csvContent = [
       headers.join(','),
-      ...data.map(row => 
-        headers.map(header => {
-          const value = row[header];
-          if (typeof value === 'string' && value.includes(',')) {
-            return `"${value}"`;
-          }
-          return value;
-        }).join(',')
-      )
+      ...data.map(row =>
+        headers
+          .map(header => {
+            const value = row[header];
+            if (typeof value === 'string' && value.includes(',')) {
+              return `"${value}"`;
+            }
+            return value;
+          })
+          .join(',')
+      ),
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -687,62 +708,79 @@ const Admin: React.FC = () => {
     setExporting(true);
     try {
       // Export orders.csv
-      exportToCSV(reportData.orders.map(order => ({
-        progressivo: order.progressivo,
-        cliente: order.cliente,
-        stato: order.stato,
-        totale: (order.totale / 100).toFixed(2),
-        is_staff: order.is_staff,
-        is_prioritario: order.is_prioritario,
-        note: order.note || '',
-        created_at: order.created_at.toDate().toISOString(),
-        created_by: order.created_by_name
-      })), 'orders.csv');
+      exportToCSV(
+        reportData.orders.map(order => ({
+          progressivo: order.progressivo,
+          cliente: order.cliente,
+          stato: order.stato,
+          totale: (order.totale / 100).toFixed(2),
+          is_staff: order.is_staff,
+          is_prioritario: order.is_prioritario,
+          note: order.note || '',
+          created_at: order.created_at.toDate().toISOString(),
+          created_by: order.created_by_name,
+        })),
+        'orders.csv'
+      );
 
       // Export order_lines.csv
-      exportToCSV(reportData.orderLines.map(line => ({
-        order_id: line.order_id,
-        menu_item_id: line.menu_item_id,
-        menu_item_name: line.menu_item_name,
-        quantita: line.quantita,
-        prezzo_unitario: (line.prezzo_unitario / 100).toFixed(2),
-        prezzo_totale: (line.prezzo_totale / 100).toFixed(2),
-        is_staff: line.is_staff,
-        is_priority: line.is_priority,
-        note: line.note || ''
-      })), 'order_lines.csv');
+      exportToCSV(
+        reportData.orderLines.map(line => ({
+          order_id: line.order_id,
+          menu_item_id: line.menu_item_id,
+          menu_item_name: line.menu_item_name,
+          quantita: line.quantita,
+          prezzo_unitario: (line.prezzo_unitario / 100).toFixed(2),
+          prezzo_totale: (line.prezzo_totale / 100).toFixed(2),
+          is_staff: line.is_staff,
+          is_priority: line.is_priority,
+          note: line.note || '',
+        })),
+        'order_lines.csv'
+      );
 
       // Export items_sold.csv
       exportToCSV(reportData.itemsSold, 'items_sold.csv');
 
       // Export revenue_by_item.csv
-      exportToCSV(reportData.itemsSold.map(item => ({
-        item_name: item.itemName,
-        category: item.category,
-        total_quantity: item.totalQuantity,
-        staff_quantity: item.staffQuantity,
-        regular_quantity: item.regularQuantity,
-        revenue_eur: (item.revenue / 100).toFixed(2)
-      })), 'revenue_by_item.csv');
+      exportToCSV(
+        reportData.itemsSold.map(item => ({
+          item_name: item.itemName,
+          category: item.category,
+          total_quantity: item.totalQuantity,
+          staff_quantity: item.staffQuantity,
+          regular_quantity: item.regularQuantity,
+          revenue_eur: (item.revenue / 100).toFixed(2),
+        })),
+        'revenue_by_item.csv'
+      );
 
       // Export summary.csv
-      exportToCSV([{
-        period_start: reportData.period.start.toISOString(),
-        period_end: reportData.period.end.toISOString(),
-        total_orders: reportData.summary.totalOrders,
-        staff_orders: reportData.summary.staffOrders,
-        regular_orders: reportData.summary.regularOrders,
-        total_revenue_eur: (reportData.summary.totalRevenue / 100).toFixed(2),
-        average_ticket_eur: (reportData.summary.averageTicket / 100).toFixed(2)
-      }], 'summary.csv');
+      exportToCSV(
+        [
+          {
+            period_start: reportData.period.start.toISOString(),
+            period_end: reportData.period.end.toISOString(),
+            total_orders: reportData.summary.totalOrders,
+            staff_orders: reportData.summary.staffOrders,
+            regular_orders: reportData.summary.regularOrders,
+            total_revenue_eur: (reportData.summary.totalRevenue / 100).toFixed(
+              2
+            ),
+            average_ticket_eur: (
+              reportData.summary.averageTicket / 100
+            ).toFixed(2),
+          },
+        ],
+        'summary.csv'
+      );
 
       // Crea ZIP con tutti i file
       // Nota: Per ora esportiamo i file singolarmente
       // In futuro si può implementare JSZip per creare un file ZIP
-      
     } catch (err) {
-      console.error('Errore durante l\'export:', err);
-      setError('Errore durante l\'export dei report');
+      console.error("Errore durante l'export:", err);
+      setError("Errore durante l'export dei report");
     } finally {
       setExporting(false);
     }
@@ -1222,7 +1260,7 @@ const Admin: React.FC = () => {
                 <label>Periodo Report:</label>
                 <select
                   value={reportDateRange}
-                  onChange={(e) => setReportDateRange(e.target.value as any)}
+                  onChange={e => setReportDateRange(e.target.value as any)}
                   className="period-select"
                 >
                   <option value="today">Oggi</option>
@@ -1239,7 +1277,7 @@ const Admin: React.FC = () => {
                     <input
                       type="date"
                       value={customStartDate}
-                      onChange={(e) => setCustomStartDate(e.target.value)}
+                      onChange={e => setCustomStartDate(e.target.value)}
                       className="date-field"
                     />
                   </div>
@@ -1248,7 +1286,7 @@ const Admin: React.FC = () => {
                     <input
                       type="date"
                       value={customEndDate}
-                      onChange={(e) => setCustomEndDate(e.target.value)}
+                      onChange={e => setCustomEndDate(e.target.value)}
                       className="date-field"
                     />
                   </div>
@@ -1259,7 +1297,10 @@ const Admin: React.FC = () => {
                 <button
                   onClick={generateReport}
                   className="generate-button"
-                  disabled={reportDateRange === 'custom' && (!customStartDate || !customEndDate)}
+                  disabled={
+                    reportDateRange === 'custom' &&
+                    (!customStartDate || !customEndDate)
+                  }
                 >
                   📊 Genera Report
                 </button>
@@ -1273,23 +1314,33 @@ const Admin: React.FC = () => {
                   <h3>📈 Riepilogo Periodo</h3>
                   <div className="summary-grid">
                     <div className="summary-card">
-                      <div className="summary-number">{reportData.summary.totalOrders}</div>
+                      <div className="summary-number">
+                        {reportData.summary.totalOrders}
+                      </div>
                       <div className="summary-label">Totale Ordini</div>
                     </div>
                     <div className="summary-card">
-                      <div className="summary-number">{reportData.summary.staffOrders}</div>
+                      <div className="summary-number">
+                        {reportData.summary.staffOrders}
+                      </div>
                       <div className="summary-label">Ordini Staff</div>
                     </div>
                     <div className="summary-card">
-                      <div className="summary-number">{reportData.summary.regularOrders}</div>
+                      <div className="summary-number">
+                        {reportData.summary.regularOrders}
+                      </div>
                       <div className="summary-label">Ordini Clienti</div>
                     </div>
                     <div className="summary-card revenue">
-                      <div className="summary-number">€{(reportData.summary.totalRevenue / 100).toFixed(2)}</div>
+                      <div className="summary-number">
+                        €{(reportData.summary.totalRevenue / 100).toFixed(2)}
+                      </div>
                       <div className="summary-label">Ricavo Totale</div>
                     </div>
                     <div className="summary-card">
-                      <div className="summary-number">€{(reportData.summary.averageTicket / 100).toFixed(2)}</div>
+                      <div className="summary-number">
+                        €{(reportData.summary.averageTicket / 100).toFixed(2)}
+                      </div>
                       <div className="summary-label">Scontrino Medio</div>
                     </div>
                   </div>
@@ -1311,16 +1362,20 @@ const Admin: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {reportData.itemsSold.map((item: any, index: number) => (
-                          <tr key={index}>
-                            <td>{item.itemName}</td>
-                            <td>{item.category}</td>
-                            <td>{item.totalQuantity}</td>
-                            <td>{item.staffQuantity}</td>
-                            <td>{item.regularQuantity}</td>
-                            <td className="revenue-cell">{(item.revenue / 100).toFixed(2)}</td>
-                          </tr>
-                        ))}
+                        {reportData.itemsSold.map(
+                          (item: any, index: number) => (
+                            <tr key={index}>
+                              <td>{item.itemName}</td>
+                              <td>{item.category}</td>
+                              <td>{item.totalQuantity}</td>
+                              <td>{item.staffQuantity}</td>
+                              <td>{item.regularQuantity}</td>
+                              <td className="revenue-cell">
+                                {(item.revenue / 100).toFixed(2)}
+                              </td>
+                            </tr>
+                          )
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -1336,11 +1391,15 @@ const Admin: React.FC = () => {
                         <div className="category-stat-details">
                           <div className="stat-item">
                             <span className="stat-label">Quantità:</span>
-                            <span className="stat-value">{cat.totalQuantity}</span>
+                            <span className="stat-value">
+                              {cat.totalQuantity}
+                            </span>
                           </div>
                           <div className="stat-item">
                             <span className="stat-label">Ricavo:</span>
-                            <span className="stat-value revenue">€{(cat.revenue / 100).toFixed(2)}</span>
+                            <span className="stat-value revenue">
+                              €{(cat.revenue / 100).toFixed(2)}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -1353,83 +1412,118 @@ const Admin: React.FC = () => {
                   <h3>📤 Export Dati</h3>
                   <div className="export-buttons">
                     <button
-                      onClick={() => exportToCSV(reportData.orders.map(order => ({
-                        progressivo: order.progressivo,
-                        cliente: order.cliente,
-                        stato: order.stato,
-                        totale: (order.totale / 100).toFixed(2),
-                        is_staff: order.is_staff,
-                        is_prioritario: order.is_prioritario,
-                        note: order.note || '',
-                        created_at: order.created_at.toDate().toISOString(),
-                        created_by: order.created_by_name
-                      })), 'orders.csv')}
+                      onClick={() =>
+                        exportToCSV(
+                          reportData.orders.map(order => ({
+                            progressivo: order.progressivo,
+                            cliente: order.cliente,
+                            stato: order.stato,
+                            totale: (order.totale / 100).toFixed(2),
+                            is_staff: order.is_staff,
+                            is_prioritario: order.is_prioritario,
+                            note: order.note || '',
+                            created_at: order.created_at.toDate().toISOString(),
+                            created_by: order.created_by_name,
+                          })),
+                          'orders.csv'
+                        )
+                      }
                       className="export-button"
                     >
                       📋 orders.csv
                     </button>
                     <button
-                      onClick={() => exportToCSV(reportData.orderLines.map(line => ({
-                        order_id: line.order_id,
-                        menu_item_id: line.menu_item_id,
-                        menu_item_name: line.menu_item_name,
-                        quantita: line.quantita,
-                        prezzo_unitario: (line.prezzo_unitario / 100).toFixed(2),
-                        prezzo_totale: (line.prezzo_totale / 100).toFixed(2),
-                        is_staff: line.is_staff,
-                        is_priority: line.is_priority,
-                        note: line.note || ''
-                      })), 'order_lines.csv')}
+                      onClick={() =>
+                        exportToCSV(
+                          reportData.orderLines.map(line => ({
+                            order_id: line.order_id,
+                            menu_item_id: line.menu_item_id,
+                            menu_item_name: line.menu_item_name,
+                            quantita: line.quantita,
+                            prezzo_unitario: (
+                              line.prezzo_unitario / 100
+                            ).toFixed(2),
+                            prezzo_totale: (line.prezzo_totale / 100).toFixed(
+                              2
+                            ),
+                            is_staff: line.is_staff,
+                            is_priority: line.is_priority,
+                            note: line.note || '',
+                          })),
+                          'order_lines.csv'
+                        )
+                      }
                       className="export-button"
                     >
                       📊 order_lines.csv
                     </button>
                     <button
-                      onClick={() => exportToCSV(reportData.itemsSold, 'items_sold.csv')}
+                      onClick={() =>
+                        exportToCSV(reportData.itemsSold, 'items_sold.csv')
+                      }
                       className="export-button"
                     >
                       🍽️ items_sold.csv
                     </button>
                     <button
-                      onClick={() => exportToCSV(reportData.itemsSold.map(item => ({
-                        item_name: item.itemName,
-                        category: item.category,
-                        total_quantity: item.totalQuantity,
-                        staff_quantity: item.staffQuantity,
-                        regular_quantity: item.regularQuantity,
-                        revenue_eur: (item.revenue / 100).toFixed(2)
-                      })), 'revenue_by_item.csv')}
+                      onClick={() =>
+                        exportToCSV(
+                          reportData.itemsSold.map(item => ({
+                            item_name: item.itemName,
+                            category: item.category,
+                            total_quantity: item.totalQuantity,
+                            staff_quantity: item.staffQuantity,
+                            regular_quantity: item.regularQuantity,
+                            revenue_eur: (item.revenue / 100).toFixed(2),
+                          })),
+                          'revenue_by_item.csv'
+                        )
+                      }
                       className="export-button"
                     >
                       💰 revenue_by_item.csv
                     </button>
                     <button
-                      onClick={() => exportToCSV([{
-                        period_start: reportData.period.start.toISOString(),
-                        period_end: reportData.period.end.toISOString(),
-                        total_orders: reportData.summary.totalOrders,
-                        staff_orders: reportData.summary.staffOrders,
-                        regular_orders: reportData.summary.regularOrders,
-                        total_revenue_eur: (reportData.summary.totalRevenue / 100).toFixed(2),
-                        average_ticket_eur: (reportData.summary.averageTicket / 100).toFixed(2)
-                      }], 'summary.csv')}
+                      onClick={() =>
+                        exportToCSV(
+                          [
+                            {
+                              period_start:
+                                reportData.period.start.toISOString(),
+                              period_end: reportData.period.end.toISOString(),
+                              total_orders: reportData.summary.totalOrders,
+                              staff_orders: reportData.summary.staffOrders,
+                              regular_orders: reportData.summary.regularOrders,
+                              total_revenue_eur: (
+                                reportData.summary.totalRevenue / 100
+                              ).toFixed(2),
+                              average_ticket_eur: (
+                                reportData.summary.averageTicket / 100
+                              ).toFixed(2),
+                            },
+                          ],
+                          'summary.csv'
+                        )
+                      }
                       className="export-button"
                     >
                       📈 summary.csv
                     </button>
                   </div>
-                  
+
                   <div className="export-all-section">
                     <button
                       onClick={exportAllReports}
                       className="export-all-button"
                       disabled={exporting}
                     >
-                      {exporting ? '⏳ Esportando...' : '📦 Esporta Tutto (5 CSV)'}
+                      {exporting
+                        ? '⏳ Esportando...'
+                        : '📦 Esporta Tutto (5 CSV)'}
                     </button>
                     <p className="export-note">
-                      I file CSV verranno scaricati singolarmente. 
-                      Staff escluso dal ricavo ma contato nelle quantità.
+                      I file CSV verranno scaricati singolarmente. Staff escluso
+                      dal ricavo ma contato nelle quantità.
                     </p>
                   </div>
                 </div>
@@ -1441,7 +1535,10 @@ const Admin: React.FC = () => {
               <div className="no-report">
                 <div className="no-report-icon">📊</div>
                 <h3>Nessun Report Generato</h3>
-                <p>Seleziona un periodo e genera un report per visualizzare le statistiche e esportare i dati.</p>
+                <p>
+                  Seleziona un periodo e genera un report per visualizzare le
+                  statistiche e esportare i dati.
+                </p>
               </div>
             )}
           </div>

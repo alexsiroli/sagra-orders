@@ -1058,7 +1058,11 @@
 
 .summary-card.revenue {
   border-color: var(--primary-color);
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.1),
+    rgba(59, 130, 246, 0.05)
+  );
 }
 
 .summary-number {
