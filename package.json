@@ -13,7 +13,9 @@
     "test:firebase:connection": "node src/scripts/testFirebaseSetup.js",
     "test:firebase:setup": "node -e \"import('./src/scripts/testFirebaseSetup.js').then(m => m.testFirebaseSetup())\"",
     "test:firebase:security": "node -e \"import('./src/scripts/testFirebaseSetup.js').then(m => m.testFirebaseSetup())\"",
-    "test:firebase:queries": "node -e \"import('./src/scripts/testFirebaseSetup.js').then(m => m.testFirebaseSetup())\""
+    "test:firebase:queries": "node -e \"import('./src/scripts/testFirebaseSetup.js').then(m => m.testFirebaseSetup())\"",
+    "test:datamodel": "node -e \"import('./src/scripts/testDataModel.ts').then(m => m.runDataModelTests())\"",
+    "test:validation": "node -e \"import('./src/scripts/testDataModel.ts').then(m => m.runDataModelTests())\""
   },
   "dependencies": {
     "firebase": "^12.1.0",

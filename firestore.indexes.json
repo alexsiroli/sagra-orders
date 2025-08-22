@@ -101,6 +101,66 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "categories",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "is_attiva",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "ordine",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "menu_components",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "categoria_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "is_attivo",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "nome",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "order_lines",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "order_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "stato",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "order_lines",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "menu_item_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "stato",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []

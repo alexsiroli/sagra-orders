@@ -58,6 +58,24 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
     
+    // Menu components collection
+    match /menu_components/{componentId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // Menu items collection
+    match /menu_items/{itemId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // Order lines collection
+    match /order_lines/{lineId} {
+      allow read: if isAuthenticated() && (isAdmin() || isCassa() || isCucina());
+      allow write: if isAuthenticated() && (isAdmin() || isCassa() || isCucina());
+    }
+    
     // Settings collection - only admins
     match /settings/{settingId} {
       allow read, write: if isAdmin();
