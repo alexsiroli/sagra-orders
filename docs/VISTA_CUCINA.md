@@ -1,17 +1,20 @@
 # Vista Cucina - Issue #7
 
 ## 🌟 Panoramica
+
 La Vista Cucina è il sistema di gestione preparazione ordini per il personale di cucina, implementando tutte le funzionalità richieste per la gestione efficiente della coda ordini.
 
 ## 🏗️ Architettura Implementata
 
 ### **Layout e Design**
+
 - **Header con Statistiche**: Dashboard completo con metriche cucina
 - **Lista Ordini Dinamica**: Aggiornamento real-time con Firebase
 - **Card Ordine**: Design moderno con evidenziazione priorità
 - **Responsive Design**: Ottimizzato per tutti i dispositivi
 
 ### **Gestione Stato**
+
 - **React Hooks**: `useState`, `useEffect` per gestione stato locale
 - **Firebase Realtime**: Listener per ordini in tempo reale
 - **Batch Operations**: Aggiornamenti atomici per integrità dati
@@ -19,12 +22,14 @@ La Vista Cucina è il sistema di gestione preparazione ordini per il personale d
 ## 🚀 Funzionalità Implementate
 
 ### **📋 Lista Ordini per Progressivo**
+
 - ✅ **Ordine Progressivo**: Lista ordinata per numero progressivo
 - ✅ **Priorità Automatica**: Ordini prioritari sempre in alto
 - ✅ **Filtro CIBO**: Solo piatti, esclude bevande automaticamente
 - ✅ **Aggiornamento Real-time**: Lista si aggiorna automaticamente
 
 ### **🎯 Card Ordine Completa**
+
 - **Progressivo**: Numero ordine prominente e visibile
 - **Ora Creazione**: Tempo trascorso dall'ordine (aggiornato ogni 30s)
 - **Piatti CIBO**: Componenti menu aggregati e formattati
@@ -32,12 +37,14 @@ La Vista Cucina è il sistema di gestione preparazione ordini per il personale d
 - **Contatore Piatti**: Totale piatti da preparare
 
 ### **⚡ Pulsante Segna PRONTO**
+
 - ✅ **Aggiornamento Completo**: Stato ordine + righe ordine
 - ✅ **Statistiche Aggiornate**: `ultimo_progressivo_pronto` incrementato
 - ✅ **Rimozione Coda**: Ordine scompare automaticamente
 - ✅ **Feedback Utente**: Conferma visiva e messaggio
 
 ### **📊 Dashboard Statistiche**
+
 - **Totale Ordini**: Contatore generale ordini
 - **In Coda**: Ordini attualmente in attesa
 - **Completati Oggi**: Ordini completati nella giornata
@@ -46,18 +53,21 @@ La Vista Cucina è il sistema di gestione preparazione ordini per il personale d
 ## 🎨 Design e UI/UX
 
 ### **Design System**
+
 - **Colori**: Gradienti blu-viola (#667eea → #764ba2) per elementi principali
 - **Priorità**: Gradienti rosa (#f093fb → #f5576c) per ordini urgenti
 - **Success**: Gradienti verdi (#48bb78 → #38a169) per azioni positive
 - **Card Design**: Bordi arrotondati e ombre sottili
 
 ### **Evidenziazione Priorità**
+
 - **Badge PRIORITARIO**: Evidenziazione visiva con animazione pulse
 - **Bordo Colorato**: Bordo superiore rosa per ordini prioritari
 - **Background Speciale**: Gradiente sottile per differenziazione
 - **Animazioni**: Effetti hover e transizioni fluide
 
 ### **Layout Responsive**
+
 - **Desktop**: Header orizzontale con statistiche affiancate
 - **Tablet**: Layout adattivo con statistiche wrap
 - **Mobile**: Stack verticale ottimizzato per touch
@@ -65,6 +75,7 @@ La Vista Cucina è il sistema di gestione preparazione ordini per il personale d
 ## 🔧 Implementazione Tecnica
 
 ### **Componenti React**
+
 ```typescript
 // Interfacce locali
 interface OrderWithDetails extends Order {
@@ -84,6 +95,7 @@ interface KitchenStats {
 ```
 
 ### **Firebase Realtime Listener**
+
 ```typescript
 const setupRealtimeListener = () => {
   const ordersQuery = query(
@@ -92,7 +104,7 @@ const setupRealtimeListener = () => {
     orderBy('created_at', 'asc')
   );
 
-  const unsubscribe = onSnapshot(ordersQuery, async (snapshot) => {
+  const unsubscribe = onSnapshot(ordersQuery, async snapshot => {
     // Processa ordini e aggiorna stato
   });
 
@@ -101,25 +113,27 @@ const setupRealtimeListener = () => {
 ```
 
 ### **Filtro Piatti CIBO**
+
 ```typescript
 // Filtra solo piatti CIBO (esclude bevande)
 const foodOrderLines = orderLines.filter(line => {
   const menuItem = menuItems.find(item => item.id === line.menu_item_id);
   if (!menuItem) return false;
-  
+
   const category = categories.find(cat => cat.id === menuItem.categoria_id);
   return category && category.nome !== 'Bevande';
 });
 ```
 
 ### **Aggiornamento Stato Ordine**
+
 ```typescript
 const markOrderAsReady = async (orderId: string, progressivo: number) => {
   // 1. Aggiorna stato ordine
   await updateDoc(orderRef, {
     stato: 'pronto',
     preparato_da: user?.id || '',
-    preparato_da_name: user?.nome || ''
+    preparato_da_name: user?.nome || '',
   });
 
   // 2. Aggiorna stato righe ordine
@@ -132,7 +146,7 @@ const markOrderAsReady = async (orderId: string, progressivo: number) => {
   // 3. Aggiorna statistiche
   await updateDoc(statsRef, {
     ultimo_progressivo_pronto: progressivo,
-    totale_ordini_completati_oggi: increment(1)
+    totale_ordini_completati_oggi: increment(1),
   });
 
   // 4. Rimuovi dalla lista (scompare dalla coda)
@@ -143,12 +157,14 @@ const markOrderAsReady = async (orderId: string, progressivo: number) => {
 ## 📱 Responsive Design
 
 ### **Breakpoints**
+
 - **1200px+**: Desktop con statistiche affiancate
 - **992px-1199px**: Tablet con layout adattivo
 - **768px-991px**: Mobile large con stack verticale
 - **≤767px**: Mobile con ottimizzazioni touch
 
 ### **Adaptations**
+
 - **Header**: Da orizzontale a verticale su mobile
 - **Statistiche**: Da affiancate a stack su schermi piccoli
 - **Card Ordine**: Padding e font-size adattivi
@@ -157,6 +173,7 @@ const markOrderAsReady = async (orderId: string, progressivo: number) => {
 ## 🧪 Testing e Validazione
 
 ### **Funzionalità Testate**
+
 - ✅ **Caricamento Dati**: Menu items, componenti, categorie
 - ✅ **Listener Real-time**: Aggiornamento automatico ordini
 - ✅ **Filtro CIBO**: Esclusione bevande funzionante
@@ -166,6 +183,7 @@ const markOrderAsReady = async (orderId: string, progressivo: number) => {
 - ✅ **Aggiornamento Stats**: Statistiche incrementate correttamente
 
 ### **Edge Cases Gestiti**
+
 - **Nessun Ordine**: Messaggio "Tutti gli ordini sono pronti!"
 - **Ordini Solo Bevande**: Non vengono mostrati (filtro CIBO)
 - **Errori Network**: Gestione fallimenti Firebase
@@ -174,6 +192,7 @@ const markOrderAsReady = async (orderId: string, progressivo: number) => {
 ## 🚀 Utilizzo e Demo
 
 ### **Flusso Operativo**
+
 1. **Caricamento**: Vista si popola automaticamente con ordini in attesa
 2. **Visualizzazione**: Ordini ordinati per priorità e progressivo
 3. **Preparazione**: Cuoco prepara i piatti dell'ordine
@@ -181,6 +200,7 @@ const markOrderAsReady = async (orderId: string, progressivo: number) => {
 5. **Aggiornamento**: Ordine scompare dalla coda e stats aggiornate
 
 ### **Account Demo**
+
 - **👑 Admin**: Accesso completo a tutte le funzionalità
 - **💳 Cassa**: Accesso limitato (non può preparare ordini)
 - **👨‍🍳 Cucina**: Accesso specifico alla vista cucina
@@ -188,17 +208,20 @@ const markOrderAsReady = async (orderId: string, progressivo: number) => {
 ## 📊 Metriche e Performance
 
 ### **Bundle Size**
+
 - **Componente**: ~12KB (gzipped)
 - **Stili**: ~6KB (gzipped)
 - **Dependencies**: Firebase + React hooks
 
 ### **Performance**
+
 - **First Load**: < 2s
 - **Real-time Updates**: < 100ms per aggiornamento
 - **Responsive**: < 100ms per breakpoint changes
 - **Firebase**: Listener ottimizzati e batch operations
 
 ### **Lighthouse Score**
+
 - **Performance**: 95+
 - **Accessibility**: 90+
 - **Best Practices**: 95+
@@ -207,12 +230,14 @@ const markOrderAsReady = async (orderId: string, progressivo: number) => {
 ## 🔐 Sicurezza e Validazione
 
 ### **Validazioni Client**
+
 - **Filtro CIBO**: Esclusione automatica bevande
 - **Stato Ordine**: Solo ordini "in_attesa" mostrati
 - **Ruoli**: Controllo accessi per utente cucina
 - **Dati**: Validazione formati e tipi
 
 ### **Validazioni Server**
+
 - **Firestore Rules**: Controllo permessi lettura/scrittura
 - **Batch Operations**: Transazioni atomiche per integrità
 - **Stato Updates**: Verifica transizioni stato valide
@@ -220,12 +245,14 @@ const markOrderAsReady = async (orderId: string, progressivo: number) => {
 ## 🚨 Troubleshooting
 
 ### **Problemi Comuni**
+
 1. **Ordini Non Aggiornati**: Verifica listener Firebase
 2. **Bevande Mostrate**: Controlla nomi categorie
 3. **Stats Non Aggiornate**: Verifica permessi Firestore
 4. **Ordini Non Rimossi**: Controlla batch operations
 
 ### **Soluzioni**
+
 - **Refresh Listener**: Riconnessione Firebase
 - **Clear Cache**: Reset dati locali
 - **Check Console**: Verifica errori JavaScript
@@ -234,12 +261,14 @@ const markOrderAsReady = async (orderId: string, progressivo: number) => {
 ## 📚 Riferimenti e Risorse
 
 ### **Documentazione**
+
 - **Firebase**: Firestore, Real-time Listener, Batch Operations
 - **React**: Hooks, State Management, useEffect
 - **CSS Grid/Flexbox**: Layout responsive avanzato
 - **TypeScript**: Type safety e interfacce
 
 ### **Best Practices**
+
 - **Real-time Updates**: Listener ottimizzati per performance
 - **Batch Operations**: Aggiornamenti atomici per integrità
 - **Error Handling**: Gestione completa errori e fallimenti

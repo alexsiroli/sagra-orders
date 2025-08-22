@@ -1,19 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../config/firebase';
-import { 
-  collection, 
-  query, 
-  getDocs, 
-  doc, 
+import {
+  collection,
+  query,
+  getDocs,
+  doc,
   updateDoc,
   orderBy,
   where,
   onSnapshot,
   increment,
-  writeBatch
+  writeBatch,
 } from 'firebase/firestore';
-import { Order, OrderLine, MenuItem, MenuComponent, Category } from '../types/dataModel';
+import {
+  Order,
+  OrderLine,
+  MenuItem,
+  MenuComponent,
+  Category,
+} from '../types/dataModel';
 import './Cucina.css';
 
 // ============================================================================
@@ -41,11 +47,11 @@ interface KitchenStats {
 
 const Cucina: React.FC = () => {
   const { user } = useAuth();
-  
+
   // ============================================================================
   // STATI LOCALI
   // ============================================================================
-  
+
   const [orders, setOrders] = useState<OrderWithDetails[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [menuComponents, setMenuComponents] = useState<MenuComponent[]>([]);
@@ -54,7 +60,7 @@ const Cucina: React.FC = () => {
     totalOrders: 0,
     pendingOrders: 0,
     completedToday: 0,
-    lastCompletedNumber: 0
+    lastCompletedNumber: 0,
   });
   const [loading, setLoading] = useState(true);
   const [processingOrder, setProcessingOrder] = useState<string | null>(null);
@@ -71,14 +77,14 @@ const Cucina: React.FC = () => {
   useEffect(() => {
     // Aggiorna il tempo solo quando necessario, non ad ogni cambio di orders
     const interval = setInterval(() => {
-      setOrders(prevOrders => 
+      setOrders(prevOrders =>
         prevOrders.map(order => ({
           ...order,
-          timeSinceCreation: getTimeSinceCreation(order.created_at)
+          timeSinceCreation: getTimeSinceCreation(order.created_at),
         }))
       );
     }, 30000); // Aggiorna ogni 30 secondi
-    
+
     return () => clearInterval(interval);
   }, []); // Dipendenze vuote per evitare loop infiniti
 
@@ -86,7 +92,7 @@ const Cucina: React.FC = () => {
     // Aggiorna pendingOrders quando cambia il numero di ordini
     setStats(prev => ({
       ...prev,
-      pendingOrders: orders.length
+      pendingOrders: orders.length,
     }));
   }, [orders.length]);
 
@@ -97,13 +103,13 @@ const Cucina: React.FC = () => {
   const loadInitialData = async () => {
     try {
       setLoading(true);
-      
+
       // Carica menu items
       const menuItemsQuery = query(collection(db, 'menu_items'));
       const menuItemsSnapshot = await getDocs(menuItemsQuery);
       const menuItemsData = menuItemsSnapshot.docs.map(doc => ({
         ...doc.data(),
-        id: doc.id
+        id: doc.id,
       })) as MenuItem[];
       setMenuItems(menuItemsData);
 
@@ -112,7 +118,7 @@ const Cucina: React.FC = () => {
       const componentsSnapshot = await getDocs(componentsQuery);
       const componentsData = componentsSnapshot.docs.map(doc => ({
         ...doc.data(),
-        id: doc.id
+        id: doc.id,
       })) as MenuComponent[];
       setMenuComponents(componentsData);
 
@@ -121,13 +127,12 @@ const Cucina: React.FC = () => {
       const categoriesSnapshot = await getDocs(categoriesQuery);
       const categoriesData = categoriesSnapshot.docs.map(doc => ({
         ...doc.data(),
-        id: doc.id
+        id: doc.id,
       })) as Category[];
       setCategories(categoriesData);
 
       // Carica statistiche
       await loadKitchenStats();
-      
     } catch (error) {
       console.error('Errore durante il caricamento dati:', error);
     } finally {
@@ -143,12 +148,12 @@ const Cucina: React.FC = () => {
       // Rimuovo temporaneamente orderBy('created_at', 'asc') fino a quando l'indice non è creato
     );
 
-    const unsubscribe = onSnapshot(ordersQuery, async (snapshot) => {
+    const unsubscribe = onSnapshot(ordersQuery, async snapshot => {
       const ordersData: OrderWithDetails[] = [];
-      
+
       for (const orderDoc of snapshot.docs) {
         const orderData = orderDoc.data() as Order;
-        
+
         // Carica le righe ordine per questo ordine
         const orderLinesQuery = query(
           collection(db, 'order_lines'),
@@ -157,21 +162,27 @@ const Cucina: React.FC = () => {
         const orderLinesSnapshot = await getDocs(orderLinesQuery);
         const orderLines = orderLinesSnapshot.docs.map(doc => ({
           ...doc.data(),
-          id: doc.id
+          id: doc.id,
         })) as OrderLine[];
 
         // Filtra solo piatti CIBO (esclude bevande)
         const foodOrderLines = orderLines.filter(line => {
-          const menuItem = menuItems.find(item => item.id === line.menu_item_id);
+          const menuItem = menuItems.find(
+            item => item.id === line.menu_item_id
+          );
           if (!menuItem) return false;
-          
-          const category = categories.find(cat => cat.id === menuItem.categoria_id);
+
+          const category = categories.find(
+            cat => cat.id === menuItem.categoria_id
+          );
           return category && category.nome !== 'Bevande';
         });
 
         if (foodOrderLines.length > 0) {
           const foodItems = foodOrderLines.map(line => {
-            const menuItem = menuItems.find(item => item.id === line.menu_item_name);
+            const menuItem = menuItems.find(
+              item => item.id === line.menu_item_name
+            );
             return `${line.menu_item_name} x${line.quantita}`;
           });
 
@@ -179,9 +190,12 @@ const Cucina: React.FC = () => {
             ...orderData,
             orderLines: foodOrderLines,
             foodItems,
-            totalItems: foodOrderLines.reduce((sum, line) => sum + line.quantita, 0),
+            totalItems: foodOrderLines.reduce(
+              (sum, line) => sum + line.quantita,
+              0
+            ),
             isPriority: orderData.is_prioritario,
-            timeSinceCreation: getTimeSinceCreation(orderData.created_at)
+            timeSinceCreation: getTimeSinceCreation(orderData.created_at),
           };
 
           ordersData.push(orderWithDetails);
@@ -205,14 +219,14 @@ const Cucina: React.FC = () => {
     try {
       const statsDoc = await getDocs(collection(db, 'stats'));
       const systemStats = statsDoc.docs.find(doc => doc.data().id === 'system');
-      
+
       if (systemStats) {
         const data = systemStats.data();
         setStats(prev => ({
           ...prev,
           totalOrders: data.totale_ordini || 0,
           completedToday: data.totale_ordini_completati_oggi || 0,
-          lastCompletedNumber: data.ultimo_progressivo_pronto || 0
+          lastCompletedNumber: data.ultimo_progressivo_pronto || 0,
         }));
       }
     } catch (error) {
@@ -228,18 +242,16 @@ const Cucina: React.FC = () => {
     const now = new Date();
     const diffMs = now.getTime() - createdAt.getTime();
     const diffMins = Math.floor(diffMs / 60000);
-    
+
     if (diffMins < 1) return 'Adesso';
     if (diffMins < 60) return `${diffMins}m fa`;
-    
+
     const diffHours = Math.floor(diffMins / 60);
     if (diffHours < 24) return `${diffHours}h fa`;
-    
+
     const diffDays = Math.floor(diffHours / 24);
     return `${diffDays}g fa`;
   };
-
-
 
   const getCategoryName = (categoryId: string): string => {
     const category = categories.find(cat => cat.id === categoryId);
@@ -258,53 +270,52 @@ const Cucina: React.FC = () => {
   const markOrderAsReady = async (orderId: string, progressivo: number) => {
     try {
       setProcessingOrder(orderId);
-      
+
       // Aggiorna stato ordine
       const orderRef = doc(db, 'orders', orderId);
       await updateDoc(orderRef, {
         stato: 'pronto',
         updated_at: new Date(),
         preparato_da: user?.id || '',
-        preparato_da_name: user?.nome || ''
+        preparato_da_name: user?.nome || '',
       });
 
-             // Aggiorna stato righe ordine
-       const order = orders.find(o => o.id === orderId);
-       if (order) {
-         const batch = writeBatch(db);
-         
-         order.orderLines.forEach(line => {
-           const lineRef = doc(db, 'order_lines', line.id);
-           batch.update(lineRef, {
-             stato: 'pronto',
-             updated_at: new Date()
-           });
-         });
+      // Aggiorna stato righe ordine
+      const order = orders.find(o => o.id === orderId);
+      if (order) {
+        const batch = writeBatch(db);
 
-         await batch.commit();
-       }
+        order.orderLines.forEach(line => {
+          const lineRef = doc(db, 'order_lines', line.id);
+          batch.update(lineRef, {
+            stato: 'pronto',
+            updated_at: new Date(),
+          });
+        });
+
+        await batch.commit();
+      }
 
       // Aggiorna statistiche
       const statsRef = doc(db, 'stats', 'system');
       await updateDoc(statsRef, {
         ultimo_progressivo_pronto: progressivo,
         totale_ordini_completati_oggi: increment(1),
-        ultimo_aggiornamento: new Date()
+        ultimo_aggiornamento: new Date(),
       });
 
       // Aggiorna stats locali
       setStats(prev => ({
         ...prev,
         completedToday: prev.completedToday + 1,
-        lastCompletedNumber: progressivo
+        lastCompletedNumber: progressivo,
       }));
 
       // Rimuovi ordine dalla lista (scompare dalla coda)
       setOrders(prev => prev.filter(o => o.id !== orderId));
-      
+
       // Feedback utente
       alert(`✅ Ordine #${progressivo} segnato come PRONTO!`);
-      
     } catch (error) {
       console.error('Errore durante aggiornamento ordine:', error);
       alert('❌ Errore durante aggiornamento ordine. Controlla la console.');
@@ -357,7 +368,9 @@ const Cucina: React.FC = () => {
             <div className="no-orders-icon">🎉</div>
             <h2>Tutti gli ordini sono pronti!</h2>
             <p>Non ci sono ordini in coda da preparare.</p>
-            <small>La vista si aggiorna automaticamente quando arrivano nuovi ordini.</small>
+            <small>
+              La vista si aggiorna automaticamente quando arrivano nuovi ordini.
+            </small>
           </div>
         ) : (
           <>
@@ -373,7 +386,7 @@ const Cucina: React.FC = () => {
                   </span>
                 )}
               </div>
-              
+
               <div className="refresh-info">
                 <small>🔄 Aggiornamento automatico ogni 30 secondi</small>
               </div>
@@ -381,26 +394,29 @@ const Cucina: React.FC = () => {
 
             {/* Lista Ordini */}
             <div className="orders-list">
-              {orders.map((order) => (
-                <div 
-                  key={order.id} 
+              {orders.map(order => (
+                <div
+                  key={order.id}
                   className={`order-card ${order.isPriority ? 'priority' : ''}`}
                 >
                   {/* Header Ordine */}
                   <div className="order-header">
                     <div className="order-progressivo">
-                      <span className="progressivo-number">#{order.progressivo}</span>
+                      <span className="progressivo-number">
+                        #{order.progressivo}
+                      </span>
                       {order.isPriority && (
                         <span className="priority-badge">⚡ PRIORITARIO</span>
                       )}
                     </div>
-                    
+
                     <div className="order-meta">
                       <span className="order-time">
                         🕐 {order.timeSinceCreation}
                       </span>
                       <span className="order-items-count">
-                        🍽️ {order.totalItems} piatto{order.totalItems !== 1 ? 'i' : ''}
+                        🍽️ {order.totalItems} piatto
+                        {order.totalItems !== 1 ? 'i' : ''}
                       </span>
                     </div>
                   </div>
@@ -430,7 +446,9 @@ const Cucina: React.FC = () => {
                           .filter(line => line.note)
                           .map((line, index) => (
                             <div key={index} className="item-note">
-                              <span className="item-name">{line.menu_item_name}:</span>
+                              <span className="item-name">
+                                {line.menu_item_name}:
+                              </span>
                               <span className="note-text">{line.note}</span>
                             </div>
                           ))}
@@ -441,7 +459,9 @@ const Cucina: React.FC = () => {
                   {/* Azioni */}
                   <div className="order-actions">
                     <button
-                      onClick={() => markOrderAsReady(order.id, order.progressivo)}
+                      onClick={() =>
+                        markOrderAsReady(order.id, order.progressivo)
+                      }
                       className="ready-btn"
                       disabled={processingOrder === order.id}
                     >
@@ -463,14 +483,17 @@ const Cucina: React.FC = () => {
       <div className="cucina-footer">
         <div className="footer-info">
           <p>
-            <strong>💡 Suggerimenti:</strong> Gli ordini prioritari sono evidenziati e appaiono in alto. 
-            Dopo aver segnato un ordine come PRONTO, scompare automaticamente dalla coda.
+            <strong>💡 Suggerimenti:</strong> Gli ordini prioritari sono
+            evidenziati e appaiono in alto. Dopo aver segnato un ordine come
+            PRONTO, scompare automaticamente dalla coda.
           </p>
           <p>
             <small>
-              <strong>⏰ Tempo:</strong> Il tempo viene aggiornato automaticamente ogni 30 secondi.
+              <strong>⏰ Tempo:</strong> Il tempo viene aggiornato
+              automaticamente ogni 30 secondi.
               <br />
-              <strong>🍽️ Piatti:</strong> Vengono mostrati solo i piatti CIBO, le bevande non sono incluse.
+              <strong>🍽️ Piatti:</strong> Vengono mostrati solo i piatti CIBO,
+              le bevande non sono incluse.
             </small>
           </p>
         </div>
