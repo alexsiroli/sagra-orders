@@ -9,6 +9,7 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [pin, setPin] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isPopulating, setIsPopulating] = useState(false);
 
   const { login, loginWithPin, error } = useAuth();
   const navigate = useNavigate();
@@ -48,6 +49,27 @@ const Login: React.FC = () => {
       handleEmailLogin(e);
     } else {
       handlePinLogin(e);
+    }
+  };
+
+  const handlePopulateDatabase = async () => {
+    try {
+      setIsPopulating(true);
+
+      // Importa e esegue lo script di popolamento
+      const { populateDatabase } = await import(
+        '../scripts/populateDatabase.ts'
+      );
+      await populateDatabase();
+
+      alert('✅ Database popolato con successo! Ora puoi fare login.');
+    } catch (error) {
+      console.error('Errore durante il popolamento:', error);
+      alert(
+        '❌ Errore durante il popolamento del database. Controlla la console.'
+      );
+    } finally {
+      setIsPopulating(false);
     }
   };
 
@@ -149,18 +171,37 @@ const Login: React.FC = () => {
           </button>
         </form>
 
+        {/* Populate Database Button */}
+        <div className="populate-database-section">
+          <button
+            type="button"
+            className="populate-db-btn"
+            onClick={handlePopulateDatabase}
+            disabled={isPopulating}
+          >
+            {isPopulating ? (
+              <span className="loading-spinner">⏳</span>
+            ) : (
+              <span>🗄️ Popola Database</span>
+            )}
+          </button>
+          <small className="populate-help">
+            💡 Clicca qui per popolare il database con utenti e menu demo
+          </small>
+        </div>
+
         {/* Demo Info */}
         <div className="demo-info">
           <h3>🧪 Account Demo</h3>
           <div className="demo-accounts">
             <div className="demo-account">
-              <strong>👑 Admin:</strong> admin@sagra.it / admin123
+              <strong>👑 Admin:</strong> admin@locale.test / 000000
             </div>
             <div className="demo-account">
-              <strong>💳 Cassa:</strong> cassa@sagra.it / cassa123
+              <strong>💳 Cassa:</strong> cassa@locale.test / 000000
             </div>
             <div className="demo-account">
-              <strong>👨‍🍳 Cucina:</strong> cucina@sagra.it / cucina123
+              <strong>👨‍🍳 Cucina:</strong> cucina@locale.test / 000000
             </div>
           </div>
           <p className="demo-note">

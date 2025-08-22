@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@types/react-router-dom": "^5.3.3",
+    "dotenv": "^17.2.1",
     "firebase": "^12.1.0",
     "idb": "^8.0.3",
     "react": "^19.1.1",

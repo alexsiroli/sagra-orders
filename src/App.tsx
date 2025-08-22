@@ -16,8 +16,8 @@ import './App.css';
 
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <Router>
+    <Router>
+      <AuthProvider>
         <div className="App">
           <Routes>
             {/* Rotte pubbliche */}
@@ -63,8 +63,8 @@ const App: React.FC = () => {
             </Route>
           </Routes>
         </div>
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   );
 };
 

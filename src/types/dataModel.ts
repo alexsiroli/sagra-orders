@@ -18,7 +18,13 @@ export type OrderLineStatus =
   | 'consegnata' // Riga consegnata
   | 'completata'; // Riga completata
 
-export type UnitaMisura = 'pezzo' | 'porzione' | 'kg' | 'litro';
+export type UnitaMisura =
+  | 'pezzo'
+  | 'porzione'
+  | 'kg'
+  | 'litro'
+  | 'bottiglia'
+  | 'lattina';
 
 // ============================================================================
 // INTERFACCE UTENTI
@@ -66,6 +72,9 @@ export interface MenuComponent {
   ingredienti?: string[]; // Lista ingredienti principali
   is_attivo: boolean; // Componente disponibile
   categoria_id: string; // Riferimento categoria
+  giacenza: number; // Quantità disponibile in magazzino
+  giacenza_minima: number; // Scorta minima per evitare sold-out
+  is_disponibile: boolean; // Disponibilità basata su giacenza
   created_at: Date;
   updated_at: Date;
 }
@@ -105,11 +114,14 @@ export interface OrderLine {
   id: string; // ID documento
   order_id: string; // Riferimento ordine
   menu_item_id: string; // Riferimento menu item
+  menu_item_name: string; // Nome piatto al momento
   quantita: number; // Quantità ordinata
   prezzo_unitario: number; // Prezzo unitario al momento (in centesimi)
   prezzo_totale: number; // Prezzo totale riga (in centesimi)
   note?: string; // Note specifiche per questa riga
   stato: OrderLineStatus; // Stato singola riga
+  is_staff: boolean; // Flag staff (ricavo=0)
+  is_priority: boolean; // Flag priorità
   nome_snapshot: string; // Nome piatto al momento
   categoria_snapshot: string; // Nome categoria al momento
   allergeni_snapshot?: string[]; // Allergeni al momento
@@ -122,19 +134,13 @@ export interface Order {
   progressivo: number; // Numero progressivo giornaliero
   cliente: string; // Nome cliente
   note?: string; // Note speciali ordine
-  items: OrderLine[]; // Lista elementi ordinati
-  subtotale: number; // Subtotale (in centesimi)
-  sconto: number; // Sconto applicato (in centesimi)
   totale: number; // Totale finale (in centesimi)
   stato: OrderStatus; // Stato ordine
   is_prioritario: boolean; // Flag priorità
-  is_asporto: boolean; // Flag asporto vs consumo in loco
-  tavolo?: string; // Numero tavolo (se consumo in loco)
   created_at: Date; // Data creazione ordine
   updated_at: Date; // Data ultimo aggiornamento
-  completato_at?: Date; // Data completamento
-  preparato_da?: string; // ID utente cucina
-  servito_da?: string; // ID utente cassa
+  created_by: string; // ID utente che ha creato l'ordine
+  created_by_name: string; // Nome utente che ha creato l'ordine
 }
 
 // ============================================================================
@@ -145,6 +151,7 @@ export interface SystemStats {
   id: 'system'; // ID fisso per stats sistema
   ultimo_progressivo_creato: number; // Ultimo progressivo ordini
   ultimo_progressivo_pronto: number; // Ultimo progressivo pronti
+  totale_ordini: number; // Totale ordini (tutti i tempi)
   totale_ordini_oggi: number; // Totale ordini oggi
   totale_ordini_completati_oggi: number; // Ordini completati oggi
   totale_ordini_cancellati_oggi: number; // Ordini cancellati oggi

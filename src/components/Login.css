@@ -120,7 +120,8 @@
   border-radius: 12px;
   font-size: 1rem;
   transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.9);
+  color: #2d3748;
   box-sizing: border-box;
 }
 
@@ -129,6 +130,12 @@
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
   background: white;
+  color: #2d3748;
+}
+
+.form-input::placeholder {
+  color: #a0aec0;
+  opacity: 1;
 }
 
 .form-input:disabled {
@@ -141,6 +148,7 @@
   font-size: 1.5rem;
   letter-spacing: 0.5rem;
   font-weight: 600;
+  color: #2d3748;
 }
 
 .form-help {
@@ -203,6 +211,51 @@
 .loading-spinner {
   display: inline-block;
   animation: spin 1s linear infinite;
+}
+
+/* ============================================================================
+   POPULATE DATABASE SECTION
+   ============================================================================ */
+
+.populate-database-section {
+  text-align: center;
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 15px;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.populate-db-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 300px;
+}
+
+.populate-db-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.populate-db-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.populate-help {
+  display: block;
+  margin-top: 0.5rem;
+  color: #718096;
+  font-size: 0.9rem;
 }
 
 /* ============================================================================

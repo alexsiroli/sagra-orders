@@ -6,84 +6,55 @@ service cloud.firestore {
       return request.auth != null;
     }
     
-    function getUserRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
-    }
-    
-    function isAdmin() {
-      return isAuthenticated() && getUserRole() == 'admin';
-    }
-    
-    function isCassa() {
-      return isAuthenticated() && getUserRole() == 'cassa';
-    }
-    
-    function isCucina() {
-      return isAuthenticated() && getUserRole() == 'cucina';
-    }
-    
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
     
-    // Users collection - users can read their own data, admins can read all
+    // Users collection - users can read their own data
     match /users/{userId} {
-      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
-      allow write: if isAdmin() || isOwner(userId);
+      allow read: if isAuthenticated() && isOwner(userId);
+      allow write: if isAuthenticated() && isOwner(userId);
     }
     
     // Orders collection
     match /orders/{orderId} {
-      allow read: if isAuthenticated() && (isAdmin() || isCassa() || isCucina());
-      allow create: if isAuthenticated() && (isAdmin() || isCassa());
-      allow update: if isAuthenticated() && (isAdmin() || isCassa() || isCucina());
-      allow delete: if isAdmin();
+      allow read, write: if isAuthenticated();
     }
     
-    // Menu collection
-    match /menu/{itemId} {
-      allow read: if isAuthenticated();
-      allow write: if isAdmin();
-    }
-    
-    // Stats collection - only admins can modify
-    match /stats/{statId} {
-      allow read: if isAuthenticated() && (isAdmin() || isCassa() || isCucina());
-      allow write: if isAdmin();
-    }
-    
-    // Categories collection
+    // Menu collections - read for all authenticated users
     match /categories/{categoryId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow write: if isAuthenticated();
     }
     
-    // Menu components collection
     match /menu_components/{componentId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow write: if isAuthenticated();
     }
     
-    // Menu items collection
     match /menu_items/{itemId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow write: if isAuthenticated();
     }
     
     // Order lines collection
     match /order_lines/{lineId} {
-      allow read: if isAuthenticated() && (isAdmin() || isCassa() || isCucina());
-      allow write: if isAuthenticated() && (isAdmin() || isCassa() || isCucina());
+      allow read, write: if isAuthenticated();
     }
     
-    // Settings collection - only admins
+    // Stats collection
+    match /stats/{statId} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    // Settings collection
     match /settings/{settingId} {
-      allow read, write: if isAdmin();
+      allow read, write: if isAuthenticated();
     }
     
-    // Audit log - only admins can read
+    // Audit log
     match /audit_log/{logId} {
-      allow read, write: if isAdmin();
+      allow read, write: if isAuthenticated();
     }
   }
 }
