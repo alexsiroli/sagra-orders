@@ -69,10 +69,18 @@ const Cucina: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    updateTimeSinceCreation();
-    const interval = setInterval(updateTimeSinceCreation, 30000); // Aggiorna ogni 30 secondi
+    // Aggiorna il tempo solo quando necessario, non ad ogni cambio di orders
+    const interval = setInterval(() => {
+      setOrders(prevOrders => 
+        prevOrders.map(order => ({
+          ...order,
+          timeSinceCreation: getTimeSinceCreation(order.created_at)
+        }))
+      );
+    }, 30000); // Aggiorna ogni 30 secondi
+    
     return () => clearInterval(interval);
-  }, [orders]);
+  }, []); // Dipendenze vuote per evitare loop infiniti
 
   useEffect(() => {
     // Aggiorna pendingOrders quando cambia il numero di ordini
@@ -231,14 +239,7 @@ const Cucina: React.FC = () => {
     return `${diffDays}g fa`;
   };
 
-  const updateTimeSinceCreation = () => {
-    setOrders(prevOrders => 
-      prevOrders.map(order => ({
-        ...order,
-        timeSinceCreation: getTimeSinceCreation(order.created_at)
-      }))
-    );
-  };
+
 
   const getCategoryName = (categoryId: string): string => {
     const category = categories.find(cat => cat.id === categoryId);
