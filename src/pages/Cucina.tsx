@@ -136,11 +136,11 @@ const Cucina: React.FC = () => {
   };
 
   const setupRealtimeListener = () => {
-    // Listener per ordini in attesa
+    // Listener per ordini in attesa (versione semplificata senza orderBy per evitare errori indice)
     const ordersQuery = query(
       collection(db, 'orders'),
-      where('stato', '==', 'in_attesa'),
-      orderBy('created_at', 'asc')
+      where('stato', '==', 'in_attesa')
+      // Rimuovo temporaneamente orderBy('created_at', 'asc') fino a quando l'indice non è creato
     );
 
     const unsubscribe = onSnapshot(ordersQuery, async (snapshot) => {
@@ -171,7 +171,7 @@ const Cucina: React.FC = () => {
 
         if (foodOrderLines.length > 0) {
           const foodItems = foodOrderLines.map(line => {
-            const menuItem = menuItems.find(item => item.id === line.menu_item_id);
+            const menuItem = menuItems.find(item => item.id === line.menu_item_name);
             return `${line.menu_item_name} x${line.quantita}`;
           });
 
@@ -188,7 +188,7 @@ const Cucina: React.FC = () => {
         }
       }
 
-      // Ordina per priorità e poi per progressivo
+      // Ordina per priorità e poi per progressivo (ordinamento lato client)
       const sortedOrders = ordersData.sort((a, b) => {
         if (a.isPriority && !b.isPriority) return -1;
         if (!a.isPriority && b.isPriority) return 1;
