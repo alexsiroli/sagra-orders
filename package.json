@@ -23,6 +23,7 @@
     "inventory:detailed": "node -e \"import('./src/scripts/manageInventory.ts').then(m => m.printDetailedInventory())\""
   },
   "dependencies": {
+    "@types/react-router-dom": "^5.3.3",
     "firebase": "^12.1.0",
     "idb": "^8.0.3",
     "react": "^19.1.1",
