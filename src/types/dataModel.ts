@@ -5,9 +5,8 @@
 export type UserRole = 'admin' | 'cassa' | 'cucina';
 export type OrderStatus =
   | 'in_attesa' // Ordine creato, in attesa di preparazione
-  | 'in_preparazione' // Ordine in preparazione in cucina
+  | 'ordinato' // Ordine confermato e in preparazione
   | 'pronto' // Ordine pronto per la consegna
-  | 'consegnato' // Ordine consegnato al cliente
   | 'completato' // Ordine completato e pagato
   | 'cancellato'; // Ordine cancellato
 
@@ -66,7 +65,7 @@ export interface MenuComponent {
   id: string; // ID documento
   nome: string; // Nome componente
   descrizione?: string; // Descrizione opzionale
-  prezzo_base: number; // Prezzo base (in centesimi)
+  prezzo_base: number; // Prezzo base (in centesimi) - 0 per componenti menu
   unita_misura: UnitaMisura; // Unità di misura
   allergeni?: string[]; // Lista allergeni
   ingredienti?: string[]; // Lista ingredienti principali
@@ -75,6 +74,7 @@ export interface MenuComponent {
   giacenza: number; // Quantità disponibile in magazzino
   giacenza_minima: number; // Scorta minima per evitare sold-out
   is_disponibile: boolean; // Disponibilità basata su giacenza
+  is_illimitato: boolean; // Componente con scorte illimitate
   created_at: Date;
   updated_at: Date;
 }
@@ -94,10 +94,12 @@ export interface MenuItem {
   id: string; // ID documento
   nome: string; // Nome piatto
   descrizione?: string; // Descrizione dettagliata
-  prezzo: number; // Prezzo finale (in centesimi)
+  prezzo: number; // Prezzo finale (in centesimi) - NON somma componenti
   categoria_id: string; // Riferimento categoria
-  componenti: MenuItemComponent[]; // Lista componenti
+  componenti: MenuItemComponent[]; // Lista componenti (prezzo 0)
   is_attivo: boolean; // Piatto disponibile
+  is_sold_out: boolean; // Piatto esaurito
+  priorita_cucina: number; // Priorità per preparazione (1=alta, 5=bassa)
   is_vegetariano: boolean; // Flag vegetariano
   is_vegano: boolean; // Flag vegano
   tempo_preparazione?: number; // Minuti per preparazione
@@ -137,12 +139,16 @@ export interface Order {
   totale: number; // Totale finale (in centesimi)
   stato: OrderStatus; // Stato ordine
   is_prioritario: boolean; // Flag priorità
+  is_staff: boolean; // Ordine per personale (sconto 100%)
   created_at: Date; // Data creazione ordine
   updated_at: Date; // Data ultimo aggiornamento
   created_by: string; // ID utente che ha creato l'ordine
   created_by_name: string; // Nome utente che ha creato l'ordine
   preparato_da?: string; // ID utente cucina che ha preparato
   preparato_da_name?: string; // Nome utente cucina che ha preparato
+  // Regole di business: modifica solo se ORDINATO
+  can_modify: boolean; // Se l'ordine può essere modificato
+  stock_verified: boolean; // Se le scorte sono state verificate
 }
 
 // ============================================================================

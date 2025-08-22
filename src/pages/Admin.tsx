@@ -14,14 +14,20 @@ import {
   where,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import {
-  MenuComponent,
-  MenuItem,
+import { 
+  MenuComponent, 
+  MenuItem, 
   Category,
   SystemStats,
   Order,
   OrderLine,
 } from '../types/dataModel';
+import {
+  canModifyOrder as canModifyOrderRule,
+  validateMenuItemPricing,
+  isMenuItemSoldOut,
+  updateMenuItemSoldOutStatus,
+} from '../utils/businessRules';
 import './Admin.css';
 
 interface AdminStats {
@@ -69,6 +75,7 @@ const Admin: React.FC = () => {
     is_attivo: true,
     allergeni: [] as string[],
     componenti: [] as { component_id: string; quantita: number }[],
+    priorita_cucina: 3,
   });
 
   const [componentForm, setComponentForm] = useState({
@@ -81,6 +88,7 @@ const Admin: React.FC = () => {
     giacenza_minima: '',
     is_attivo: true,
     is_disponibile: true,
+    is_illimitato: false,
   });
 
   // State per ordini e ricerca
@@ -266,6 +274,7 @@ const Admin: React.FC = () => {
         is_attivo: item.is_attivo,
         allergeni: item.allergeni || [],
         componenti: item.componenti || [],
+        priorita_cucina: item.priorita_cucina || 3,
       });
     } else {
       setEditingItem(null);
@@ -277,6 +286,7 @@ const Admin: React.FC = () => {
         is_attivo: true,
         allergeni: [],
         componenti: [],
+        priorita_cucina: 3,
       });
     }
     setShowItemModal(true);
@@ -284,6 +294,26 @@ const Admin: React.FC = () => {
 
   const saveMenuItem = async () => {
     try {
+      // Validazione regole di business
+      const pricingValidation = validateMenuItemPricing(
+        {
+          ...editingItem,
+          nome: itemForm.nome.trim(),
+          descrizione: itemForm.descrizione.trim(),
+          prezzo: Math.round(parseFloat(itemForm.prezzo) * 100),
+          categoria_id: itemForm.categoria_id,
+          is_attivo: itemForm.is_attivo,
+          allergeni: itemForm.allergeni,
+          componenti: itemForm.componenti,
+        } as MenuItem,
+        menuComponents
+      );
+
+      if (!pricingValidation.valid) {
+        setError(`Errori di validazione: ${pricingValidation.errors.join(', ')}`);
+        return;
+      }
+
       const itemData = {
         nome: itemForm.nome.trim(),
         descrizione: itemForm.descrizione.trim(),
@@ -292,6 +322,8 @@ const Admin: React.FC = () => {
         is_attivo: itemForm.is_attivo,
         allergeni: itemForm.allergeni,
         componenti: itemForm.componenti,
+        is_sold_out: false,
+        priorita_cucina: 3, // Priorità media di default
         updated_at: Timestamp.now(),
       };
 
@@ -302,6 +334,8 @@ const Admin: React.FC = () => {
         // Create new item
         await addDoc(collection(db, 'menu_items'), {
           ...itemData,
+          is_vegetariano: false,
+          is_vegano: false,
           created_at: Timestamp.now(),
         });
       }
@@ -351,6 +385,7 @@ const Admin: React.FC = () => {
         giacenza_minima: component.giacenza_minima.toString(),
         is_attivo: component.is_attivo,
         is_disponibile: component.is_disponibile,
+        is_illimitato: component.is_illimitato || false,
       });
     } else {
       setEditingComponent(null);
@@ -364,6 +399,7 @@ const Admin: React.FC = () => {
         giacenza_minima: '5',
         is_attivo: true,
         is_disponibile: true,
+        is_illimitato: false,
       });
     }
     setShowComponentModal(true);
@@ -381,6 +417,7 @@ const Admin: React.FC = () => {
         giacenza_minima: parseInt(componentForm.giacenza_minima),
         is_attivo: componentForm.is_attivo,
         is_disponibile: componentForm.is_disponibile,
+        is_illimitato: componentForm.prezzo === '0', // Componenti a prezzo 0 sono illimitati
         updated_at: Timestamp.now(),
       };
 
@@ -475,7 +512,7 @@ const Admin: React.FC = () => {
   };
 
   const canModifyOrder = (order: Order) => {
-    return order.stato === 'in_attesa' || order.stato === 'ordinato';
+    return canModifyOrderRule(order);
   };
 
   const cancelOrder = async (order: Order) => {
@@ -1626,6 +1663,27 @@ const Admin: React.FC = () => {
                 </div>
               </div>
 
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Priorità Cucina</label>
+                  <select
+                    value={itemForm.priorita_cucina}
+                    onChange={e =>
+                      setItemForm({
+                        ...itemForm,
+                        priorita_cucina: parseInt(e.target.value),
+                      })
+                    }
+                  >
+                    <option value={1}>1 - Alta Priorità</option>
+                    <option value={2}>2 - Priorità Elevata</option>
+                    <option value={3}>3 - Priorità Media</option>
+                    <option value={4}>4 - Priorità Bassa</option>
+                    <option value={5}>5 - Priorità Minima</option>
+                  </select>
+                </div>
+              </div>
+
               <div className="form-group">
                 <label className="checkbox-label">
                   <input
@@ -1832,6 +1890,20 @@ const Admin: React.FC = () => {
                     }
                   />
                   <span>Disponibile per la vendita</span>
+                </label>
+
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={componentForm.is_illimitato}
+                    onChange={e =>
+                      setComponentForm({
+                        ...componentForm,
+                        is_illimitato: e.target.checked,
+                      })
+                    }
+                  />
+                  <span>Scorte illimitate (prezzo 0)</span>
                 </label>
               </div>
 
