@@ -125,6 +125,11 @@
   box-sizing: border-box;
 }
 
+.form-input::placeholder {
+  color: #a0aec0;
+  opacity: 1;
+}
+
 .form-input:focus {
   outline: none;
   border-color: #667eea;

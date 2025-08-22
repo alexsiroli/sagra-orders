@@ -53,6 +53,11 @@
   background: linear-gradient(135deg, #fff5f3 0%, #fff0ed 100%);
 }
 
+.stat-card.warning .stat-number,
+.stat-card.warning .stat-label {
+  color: #2d3748;
+}
+
 .stat-icon {
   font-size: 2rem;
   min-width: 3rem;
@@ -111,6 +116,11 @@
   background: var(--primary-color);
   color: white;
   font-weight: 600;
+}
+
+.tab-button.active:hover {
+  background: var(--primary-hover);
+  color: white;
 }
 
 /* Content */
@@ -582,6 +592,12 @@
 
 .toggle-button.inactive:hover {
   background: #28a745;
+  color: white;
+}
+
+.toggle-button.active:hover {
+  background: #dc3545;
+  color: white;
 }
 
 .delete-button:hover {

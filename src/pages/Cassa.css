@@ -107,6 +107,10 @@
   transition: all 0.3s ease;
 }
 
+.search-input::placeholder {
+  color: #a0aec0;
+}
+
 .search-input:focus {
   outline: none;
   border-color: #667eea;
@@ -185,6 +189,10 @@
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+}
+
+.menu-item-card * {
+  color: #2d3748;
 }
 
 .menu-item-card:hover {

@@ -130,6 +130,11 @@
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
+.nav-tab.active:hover {
+  background: rgba(255, 255, 255, 1);
+  color: #2d3748;
+}
+
 .tab-icon {
   font-size: 2rem;
   line-height: 1;

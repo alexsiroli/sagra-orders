@@ -197,6 +197,10 @@
   overflow: hidden;
 }
 
+.order-card * {
+  color: #2d3748;
+}
+
 .order-card:hover {
   transform: translateY(-2px);
   border-color: #667eea;
