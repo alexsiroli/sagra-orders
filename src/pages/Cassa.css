@@ -58,6 +58,51 @@
 }
 
 /* ============================================================================
+   STATO CONNESSIONE E CODA OFFLINE
+   ============================================================================ */
+
+.connection-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.status-indicator {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: center;
+  min-width: 100px;
+}
+
+.status-indicator.online {
+  background: rgba(72, 187, 120, 0.9);
+  color: white;
+}
+
+.status-indicator.offline {
+  background: rgba(245, 101, 101, 0.9);
+  color: white;
+}
+
+.queue-status {
+  background: rgba(255, 255, 255, 0.9);
+  color: #2d3748;
+  padding: 0.4rem 0.8rem;
+  border-radius: 15px;
+  font-weight: 500;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.queue-status.error {
+  background: rgba(245, 101, 101, 0.9);
+  color: white;
+}
+
+/* ============================================================================
    CONTENUTO PRINCIPALE
    ============================================================================ */
 

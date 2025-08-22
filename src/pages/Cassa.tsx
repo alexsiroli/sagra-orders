@@ -18,6 +18,7 @@ import {
   Order,
   OrderLine,
 } from '../types/dataModel';
+import { offlineQueueManager } from '../utils/offlineQueue';
 import './Cassa.css';
 
 // ============================================================================
@@ -65,6 +66,12 @@ const Cassa: React.FC = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [isProcessingOrder, setIsProcessingOrder] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [offlineQueueStatus, setOfflineQueueStatus] = useState<{
+    pendingOrders: number;
+    failedOrders: number;
+    lastSync: number;
+  }>({ pendingOrders: 0, failedOrders: 0, lastSync: Date.now() });
 
   // ============================================================================
   // EFFETTI INIZIALI
@@ -81,6 +88,38 @@ const Cassa: React.FC = () => {
   useEffect(() => {
     calculateChange();
   }, [cart.total, cart.received]);
+
+  useEffect(() => {
+    // Monitora stato connessione
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // Aggiorna stato coda offline periodicamente
+    const updateQueueStatus = async () => {
+      try {
+        const status = await offlineQueueManager.getQueueStatus();
+        setOfflineQueueStatus({
+          pendingOrders: status.pendingOrders,
+          failedOrders: status.failedOrders,
+          lastSync: status.lastSync,
+        });
+      } catch (error) {
+        console.warn('Impossibile aggiornare stato coda offline:', error);
+      }
+    };
+
+    const interval = setInterval(updateQueueStatus, 5000);
+    updateQueueStatus(); // Prima chiamata immediata
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      clearInterval(interval);
+    };
+  }, []);
 
   // ============================================================================
   // FUNZIONI DI CARICAMENTO DATI
@@ -288,10 +327,8 @@ const Cassa: React.FC = () => {
         return;
       }
 
-      // Crea l'ordine
-      const order: Order = {
-        id: `order_${Date.now()}`,
-        progressivo: currentOrderNumber + 1,
+      // Prepara dati ordine per il sistema offline
+      const orderData: Omit<Order, 'id' | 'progressivo'> = {
         cliente: 'Cliente generico',
         totale: cart.total,
         stato: 'in_attesa',
@@ -306,63 +343,83 @@ const Cassa: React.FC = () => {
         updated_at: new Date(),
         created_by: user?.id || '',
         created_by_name: user?.nome || '',
+        can_modify: true,
+        stock_verified: true,
+        uuid: crypto.randomUUID(),
+        sync_status: 'pending',
+        offline_created: !navigator.onLine,
       };
 
-      // Crea le righe ordine
-      const orderLines: OrderLine[] = cart.items.map((item, index) => ({
-        id: `line_${Date.now()}_${index}`,
-        order_id: order.id,
-        menu_item_id: item.menuItem.id,
-        menu_item_name: item.menuItem.nome,
-        quantita: item.quantity,
-        prezzo_unitario: item.isStaff ? 0 : item.menuItem.prezzo,
-        prezzo_totale: item.isStaff ? 0 : item.menuItem.prezzo * item.quantity,
-        note: item.notes,
-        is_staff: item.isStaff,
-        is_priority: item.isPriority,
-        stato: 'in_attesa',
-        created_at: new Date(),
-        updated_at: new Date(),
-      }));
+      // Prepara righe ordine per il sistema offline
+      const orderLinesData: Omit<OrderLine, 'id' | 'order_id'>[] =
+        cart.items.map((item, index) => ({
+          menu_item_id: item.menuItem.id,
+          menu_item_name: item.menuItem.nome,
+          quantita: item.quantity,
+          prezzo_unitario: item.isStaff ? 0 : item.menuItem.prezzo,
+          prezzo_totale: item.isStaff
+            ? 0
+            : item.menuItem.prezzo * item.quantity,
+          note: item.notes,
+          is_staff: item.isStaff,
+          is_priority: item.isPriority,
+          stato: 'in_attesa',
+          nome_snapshot: item.menuItem.nome,
+          categoria_snapshot:
+            categories.find(c => c.id === item.menuItem.categoria_id)?.nome ||
+            '',
+          allergeni_snapshot: item.menuItem.allergeni,
+          created_at: new Date(),
+          updated_at: new Date(),
+          uuid: crypto.randomUUID(),
+          sync_status: 'pending',
+        }));
 
-      // Esegui transazione
-      const batch = writeBatch(db);
+      // Utilizza il sistema di transazioni batch offline
+      const result = await offlineQueueManager.createOrderWithBatch(
+        orderData,
+        orderLinesData,
+        menuComponents
+      );
 
-      // Aggiungi ordine
-      const orderRef = doc(db, 'orders', order.id);
-      batch.set(orderRef, order);
+      if (result.success) {
+        // Ordine creato con successo
+        setCurrentOrderNumber(prev => prev + 1);
 
-      // Aggiungi righe ordine
-      orderLines.forEach(line => {
-        const lineRef = doc(db, 'order_lines', line.id);
-        batch.set(lineRef, line);
-      });
+        // Genera e scarica JSON solo se online
+        if (navigator.onLine) {
+          const tempOrder: Order = {
+            ...orderData,
+            id: result.orderId || 'temp',
+            progressivo: currentOrderNumber + 1,
+          } as Order;
 
-      // Aggiorna statistiche
-      const statsRef = doc(db, 'stats', 'system');
-      batch.update(statsRef, {
-        ultimo_progressivo_creato: increment(1),
-        totale_ordini: increment(1),
-        ultimo_aggiornamento: new Date(),
-      });
+          const tempOrderLines: OrderLine[] = orderLinesData.map(
+            (line, index) => ({
+              ...line,
+              id: `temp_${index}`,
+              order_id: result.orderId || 'temp',
+            })
+          ) as OrderLine;
 
-      // Scala scorte
-      await updateStockLevels(batch);
+          await downloadOrderJSON(tempOrder, tempOrderLines);
+        }
 
-      // Esegui batch
-      await batch.commit();
+        // Reset carrello
+        clearCart();
+        setShowPaymentModal(false);
 
-      // Incrementa progressivo locale
-      setCurrentOrderNumber(prev => prev + 1);
-
-      // Genera e scarica JSON
-      await downloadOrderJSON(order, orderLines);
-
-      // Reset carrello
-      clearCart();
-      setShowPaymentModal(false);
-
-      alert(`✅ Ordine #${order.progressivo} creato con successo!`);
+        if (navigator.onLine) {
+          alert(`✅ Ordine #${currentOrderNumber + 1} creato con successo!`);
+        } else {
+          alert(
+            `✅ Ordine #${currentOrderNumber + 1} aggiunto alla coda offline!`
+          );
+        }
+      } else {
+        // Errore nella creazione
+        alert(`❌ Errore durante la creazione ordine: ${result.error}`);
+      }
     } catch (error) {
       console.error('Errore durante la creazione ordine:', error);
       alert('❌ Errore durante la creazione ordine. Controlla la console.');
@@ -475,6 +532,23 @@ const Cassa: React.FC = () => {
           <span className="order-total">
             Totale: €{(cart.total / 100).toFixed(2)}
           </span>
+        </div>
+        <div className="connection-status">
+          <div
+            className={`status-indicator ${isOnline ? 'online' : 'offline'}`}
+          >
+            {isOnline ? '🟢 Online' : '🔴 Offline'}
+          </div>
+          {offlineQueueStatus.pendingOrders > 0 && (
+            <div className="queue-status">
+              📋 Coda: {offlineQueueStatus.pendingOrders} ordini
+            </div>
+          )}
+          {offlineQueueStatus.failedOrders > 0 && (
+            <div className="queue-status error">
+              ❌ Falliti: {offlineQueueStatus.failedOrders} ordini
+            </div>
+          )}
         </div>
       </div>
 

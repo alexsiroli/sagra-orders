@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   BrowserRouter as Router,
   Routes,
@@ -12,9 +12,15 @@ import Cassa from './pages/Cassa';
 import Cucina from './pages/Cucina';
 import Admin from './pages/Admin';
 import ProtectedRoute from './components/ProtectedRoute';
+import { initializeOfflineSystem } from './utils/offlineQueue';
 import './App.css';
 
 const App: React.FC = () => {
+  useEffect(() => {
+    // Inizializza il sistema offline all'avvio dell'app
+    initializeOfflineSystem().catch(console.error);
+  }, []);
+
   return (
     <Router>
       <AuthProvider>

@@ -129,6 +129,9 @@ export interface OrderLine {
   allergeni_snapshot?: string[]; // Allergeni al momento
   created_at: Date;
   updated_at: Date;
+  // Idempotenza e sincronizzazione
+  uuid: string; // UUID univoco per idempotenza
+  sync_status: 'synced' | 'pending' | 'failed'; // Stato sincronizzazione
 }
 
 export interface Order {
@@ -149,6 +152,10 @@ export interface Order {
   // Regole di business: modifica solo se ORDINATO
   can_modify: boolean; // Se l'ordine può essere modificato
   stock_verified: boolean; // Se le scorte sono state verificate
+  // Idempotenza e sincronizzazione
+  uuid: string; // UUID univoco per idempotenza
+  sync_status: 'synced' | 'pending' | 'failed'; // Stato sincronizzazione
+  offline_created: boolean; // Se creato in modalità offline
 }
 
 // ============================================================================
