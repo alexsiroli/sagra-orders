@@ -14,9 +14,9 @@ import {
   where,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { 
-  MenuComponent, 
-  MenuItem, 
+import {
+  MenuComponent,
+  MenuItem,
   Category,
   SystemStats,
   Order,
@@ -310,7 +310,9 @@ const Admin: React.FC = () => {
       );
 
       if (!pricingValidation.valid) {
-        setError(`Errori di validazione: ${pricingValidation.errors.join(', ')}`);
+        setError(
+          `Errori di validazione: ${pricingValidation.errors.join(', ')}`
+        );
         return;
       }
 

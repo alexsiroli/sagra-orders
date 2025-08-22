@@ -2,7 +2,13 @@
 // REGOLE DI BUSINESS - SISTEMA SAGRA ORDERS
 // ============================================================================
 
-import { Order, OrderLine, MenuItem, MenuComponent, OrderStatus } from '../types/dataModel';
+import {
+  Order,
+  OrderLine,
+  MenuItem,
+  MenuComponent,
+  OrderStatus,
+} from '../types/dataModel';
 
 // ============================================================================
 // REGOLE STATI ORDINE
@@ -58,10 +64,10 @@ export function canAddToOrder(
 
   // Se il componente non è disponibile, non si può aggiungere
   if (!component.is_disponibile) {
-    return { 
-      canAdd: false, 
-      availableQuantity: 0, 
-      reason: 'Componente non disponibile' 
+    return {
+      canAdd: false,
+      availableQuantity: 0,
+      reason: 'Componente non disponibile',
     };
   }
 
@@ -69,18 +75,18 @@ export function canAddToOrder(
   const availableQuantity = component.giacenza - currentOrderQuantity;
 
   if (availableQuantity <= 0) {
-    return { 
-      canAdd: false, 
-      availableQuantity: 0, 
-      reason: 'Scorte esaurite' 
+    return {
+      canAdd: false,
+      availableQuantity: 0,
+      reason: 'Scorte esaurite',
     };
   }
 
   if (requestedQuantity > availableQuantity) {
-    return { 
-      canAdd: false, 
-      availableQuantity, 
-      reason: `Quantità richiesta (${requestedQuantity}) supera disponibilità (${availableQuantity})` 
+    return {
+      canAdd: false,
+      availableQuantity,
+      reason: `Quantità richiesta (${requestedQuantity}) supera disponibilità (${availableQuantity})`,
     };
   }
 
@@ -97,10 +103,10 @@ export function isMenuItemAvailable(
   currentOrderQuantities: Record<string, number> = {}
 ): { available: boolean; missingComponents: string[]; reason?: string } {
   if (!menuItem.is_attivo || menuItem.is_sold_out) {
-    return { 
-      available: false, 
-      missingComponents: [], 
-      reason: 'Menu item non attivo o esaurito' 
+    return {
+      available: false,
+      missingComponents: [],
+      reason: 'Menu item non attivo o esaurito',
     };
   }
 
@@ -109,23 +115,29 @@ export function isMenuItemAvailable(
   for (const component of menuItem.componenti) {
     const componentData = components.find(c => c.id === component.component_id);
     if (!componentData) {
-      missingComponents.push(component.nome_snapshot || 'Componente sconosciuto');
+      missingComponents.push(
+        component.nome_snapshot || 'Componente sconosciuto'
+      );
       continue;
     }
 
     const currentQuantity = currentOrderQuantities[component.component_id] || 0;
-    const check = canAddToOrder(componentData, component.quantita, currentQuantity);
-    
+    const check = canAddToOrder(
+      componentData,
+      component.quantita,
+      currentQuantity
+    );
+
     if (!check.canAdd) {
       missingComponents.push(componentData.nome);
     }
   }
 
   if (missingComponents.length > 0) {
-    return { 
-      available: false, 
-      missingComponents, 
-      reason: `Componenti non disponibili: ${missingComponents.join(', ')}` 
+    return {
+      available: false,
+      missingComponents,
+      reason: `Componenti non disponibili: ${missingComponents.join(', ')}`,
     };
   }
 
@@ -155,7 +167,9 @@ export function validateMenuItemPricing(
   for (const component of menuItem.componenti) {
     const componentData = components.find(c => c.id === component.component_id);
     if (componentData && componentData.prezzo_base > 0) {
-      errors.push(`Il componente "${componentData.nome}" ha prezzo > 0 ma è usato in un menu`);
+      errors.push(
+        `Il componente "${componentData.nome}" ha prezzo > 0 ma è usato in un menu`
+      );
     }
   }
 
@@ -199,11 +213,13 @@ export function sortOrdersByKitchenPriority(
     if (!a.is_prioritario && b.is_prioritario) return 1;
 
     // 2. Priorità cucina (1=alta, 5=bassa)
-    const aMenuItem = menuItems.find(item => 
-      item.id === a.id || a.componenti?.some(c => c.component_id === item.id)
+    const aMenuItem = menuItems.find(
+      item =>
+        item.id === a.id || a.componenti?.some(c => c.component_id === item.id)
     );
-    const bMenuItem = menuItems.find(item => 
-      item.id === b.id || b.componenti?.some(c => c.component_id === item.id)
+    const bMenuItem = menuItems.find(
+      item =>
+        item.id === b.id || b.componenti?.some(c => c.component_id === item.id)
     );
 
     if (aMenuItem && bMenuItem) {
@@ -234,13 +250,16 @@ export function validateOrder(
   const warnings: string[] = [];
 
   // Verifica stato ordine
-  if (!order.stato || !Object.values(ORDER_STATUS_TRANSITIONS).flat().includes(order.stato)) {
+  if (
+    !order.stato ||
+    !Object.values(ORDER_STATUS_TRANSITIONS).flat().includes(order.stato)
+  ) {
     errors.push('Stato ordine non valido');
   }
 
   // Verifica che l'ordine abbia almeno una riga
   if (orderLines.length === 0) {
-    errors.push('L\'ordine deve contenere almeno un articolo');
+    errors.push("L'ordine deve contenere almeno un articolo");
   }
 
   // Verifica disponibilità componenti
@@ -256,13 +275,18 @@ export function validateOrder(
 
   // Verifica prezzo totale
   const calculatedTotal = calculateOrderTotal(orderLines, order.is_staff);
-  if (Math.abs(calculatedTotal - order.totale) > 1) { // Tolleranza 1 centesimo
-    warnings.push(`Prezzo totale calcolato (${calculatedTotal}) differisce da quello specificato (${order.totale})`);
+  if (Math.abs(calculatedTotal - order.totale) > 1) {
+    // Tolleranza 1 centesimo
+    warnings.push(
+      `Prezzo totale calcolato (${calculatedTotal}) differisce da quello specificato (${order.totale})`
+    );
   }
 
   // Verifica modificabilità
   if (order.stato === 'pronto' && order.can_modify) {
-    warnings.push('Ordini in stato "pronto" non dovrebbero essere modificabili');
+    warnings.push(
+      'Ordini in stato "pronto" non dovrebbero essere modificabili'
+    );
   }
 
   return { valid: errors.length === 0, errors, warnings };
@@ -284,7 +308,7 @@ export function calculateStockChanges(
 
   for (const line of orderLines) {
     const quantity = isNewOrder ? -line.quantita : line.quantita; // - per nuovo ordine, + per cancellazione
-    
+
     if (stockChanges[line.menu_item_id]) {
       stockChanges[line.menu_item_id] += quantity;
     } else {
@@ -295,7 +319,7 @@ export function calculateStockChanges(
   return Object.entries(stockChanges).map(([componentId, quantityChange]) => ({
     componentId,
     quantityChange,
-    newStock: 0 // Sarà calcolato dal chiamante
+    newStock: 0, // Sarà calcolato dal chiamante
   }));
 }
 
@@ -319,14 +343,14 @@ export function isMenuItemSoldOut(
   components: MenuComponent[]
 ): boolean {
   if (menuItem.is_sold_out) return true;
-  
+
   for (const component of menuItem.componenti) {
     const componentData = components.find(c => c.id === component.component_id);
     if (componentData && isComponentSoldOut(componentData)) {
       return true;
     }
   }
-  
+
   return false;
 }
 
