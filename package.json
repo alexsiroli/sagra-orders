@@ -15,7 +15,12 @@
     "test:firebase:security": "node -e \"import('./src/scripts/testFirebaseSetup.js').then(m => m.testFirebaseSetup())\"",
     "test:firebase:queries": "node -e \"import('./src/scripts/testFirebaseSetup.js').then(m => m.testFirebaseSetup())\"",
     "test:datamodel": "node -e \"import('./src/scripts/testDataModel.ts').then(m => m.runDataModelTests())\"",
-    "test:validation": "node -e \"import('./src/scripts/testDataModel.ts').then(m => m.runDataModelTests())\""
+    "test:validation": "node -e \"import('./src/scripts/testDataModel.ts').then(m => m.runDataModelTests())\"",
+    "seed:database": "node -e \"import('./src/scripts/seedDatabase.ts').then(m => m.seedDatabase())\"",
+    "seed:status": "node -e \"import('./src/scripts/seedDatabase.ts').then(m => m.checkDatabaseStatus())\"",
+    "admin:console": "node -e \"import('./src/scripts/adminConsole.ts').then(m => m.startAdminConsole())\"",
+    "inventory:report": "node -e \"import('./src/scripts/manageInventory.ts').then(m => m.printInventoryReport())\"",
+    "inventory:detailed": "node -e \"import('./src/scripts/manageInventory.ts').then(m => m.printDetailedInventory())\""
   },
   "dependencies": {
     "firebase": "^12.1.0",
