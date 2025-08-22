@@ -201,8 +201,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             }
           } catch (err) {
             console.error('Errore durante il recupero dati utente:', err);
-            await signOut(auth);
-            setUser(null);
+            // Non fare logout automatico in caso di errore
+            // setUser(null);
           }
         } else {
           setUser(null);

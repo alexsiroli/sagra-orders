@@ -141,6 +141,8 @@ export interface Order {
   updated_at: Date; // Data ultimo aggiornamento
   created_by: string; // ID utente che ha creato l'ordine
   created_by_name: string; // Nome utente che ha creato l'ordine
+  preparato_da?: string; // ID utente cucina che ha preparato
+  preparato_da_name?: string; // Nome utente cucina che ha preparato
 }
 
 // ============================================================================
