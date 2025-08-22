@@ -11,7 +11,7 @@ button:focus,
 input:focus,
 select:focus,
 textarea:focus,
-[role="button"]:focus,
+[role='button']:focus,
 [tabindex]:focus {
   outline: 3px solid #4299e1;
   outline-offset: 2px;
@@ -69,7 +69,7 @@ textarea:focus,
 }
 
 .item-sold-out::before {
-  content: "ESAURITO";
+  content: 'ESAURITO';
   position: absolute;
   top: 50%;
   left: 50%;
@@ -85,7 +85,7 @@ textarea:focus,
 }
 
 .item-sold-out::after {
-  content: "";
+  content: '';
   position: absolute;
   top: 0;
   left: 0;
@@ -127,11 +127,12 @@ textarea:focus,
 }
 
 @keyframes priority-pulse {
-  0%, 100% { 
+  0%,
+  100% {
     border-color: #d69e2e;
     box-shadow: 0 0 0 0 rgba(214, 158, 46, 0.4);
   }
-  50% { 
+  50% {
     border-color: #b7791f;
     box-shadow: 0 0 0 6px rgba(214, 158, 46, 0.1);
   }
@@ -153,7 +154,7 @@ textarea:focus,
 }
 
 .priority-badge::before {
-  content: "⚡";
+  content: '⚡';
 }
 
 /* Stato staff */
@@ -178,7 +179,7 @@ textarea:focus,
 }
 
 .staff-badge::before {
-  content: "👥";
+  content: '👥';
 }
 
 /* ============================================================================
@@ -364,7 +365,9 @@ textarea:focus,
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ============================================================================
@@ -395,17 +398,17 @@ textarea:focus,
     --border-color: #4a5568;
     --accent-color: #4299e1;
   }
-  
+
   .dark-theme-auto {
     background-color: var(--bg-primary);
     color: var(--text-primary);
   }
-  
+
   .dark-theme-auto .card {
     background-color: var(--bg-secondary);
     border-color: var(--border-color);
   }
-  
+
   .dark-theme-auto input,
   .dark-theme-auto select,
   .dark-theme-auto textarea {
@@ -423,13 +426,13 @@ textarea:focus,
   * {
     border-width: 2px !important;
   }
-  
+
   button,
   input,
   select {
     border: 3px solid currentColor !important;
   }
-  
+
   .menu-item-card,
   .cart-item,
   .order-card {
@@ -452,7 +455,7 @@ textarea:focus,
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  
+
   .priority-pulse {
     animation: none;
   }
@@ -465,13 +468,13 @@ textarea:focus,
 /* Assicura che i target touch siano abbastanza grandi */
 @media (pointer: coarse) {
   button,
-  [role="button"],
-  input[type="checkbox"],
-  input[type="radio"] {
+  [role='button'],
+  input[type='checkbox'],
+  input[type='radio'] {
     min-height: 44px;
     min-width: 44px;
   }
-  
+
   .menu-item-card {
     min-height: 120px;
   }

@@ -598,27 +598,41 @@ const Cassa: React.FC = () => {
       <a href="#main-content" className="skip-link">
         Salta al contenuto principale
       </a>
-      
+
       {/* Header */}
       <header className="cassa-header">
         <h1>💳 Vista Cassa</h1>
-        <div className="order-info" role="region" aria-label="Informazioni ordine corrente">
-          <span className="order-number" aria-label={`Numero ordine corrente: ${currentOrderNumber + 1}`}>
+        <div
+          className="order-info"
+          role="region"
+          aria-label="Informazioni ordine corrente"
+        >
+          <span
+            className="order-number"
+            aria-label={`Numero ordine corrente: ${currentOrderNumber + 1}`}
+          >
             Ordine #{currentOrderNumber + 1}
           </span>
-          <span className="order-total" aria-label={`Totale ordine: ${formatPrice(cart.total)}`}>
+          <span
+            className="order-total"
+            aria-label={`Totale ordine: ${formatPrice(cart.total)}`}
+          >
             Totale: €{(cart.total / 100).toFixed(2)}
           </span>
         </div>
-        <div className="connection-status" role="region" aria-label="Stato connessione">
-          <div 
+        <div
+          className="connection-status"
+          role="region"
+          aria-label="Stato connessione"
+        >
+          <div
             className={`status-badge ${isOnline ? 'online' : 'offline'}`}
             aria-label={`Stato connessione: ${isOnline ? 'Online' : 'Offline'}`}
           >
             {isOnline ? '🟢 Online' : '🔴 Offline'}
           </div>
           {offlineQueueStatus.pendingOrders > 0 && (
-            <div 
+            <div
               className="status-badge pending"
               aria-label={`Ordini in coda: ${offlineQueueStatus.pendingOrders}`}
             >
@@ -626,7 +640,7 @@ const Cassa: React.FC = () => {
             </div>
           )}
           {offlineQueueStatus.failedOrders > 0 && (
-            <div 
+            <div
               className="status-badge error"
               aria-label={`Ordini falliti: ${offlineQueueStatus.failedOrders}`}
             >
@@ -639,7 +653,11 @@ const Cassa: React.FC = () => {
       <div className="cassa-content" id="main-content">
         <main className="cassa-main">
           {/* Barra di Ricerca e Filtri */}
-          <section className="search-filters" role="search" aria-label="Ricerca e filtri menu">
+          <section
+            className="search-filters"
+            role="search"
+            aria-label="Ricerca e filtri menu"
+          >
             <div className="search-box">
               <label htmlFor="search-input" className="sr-only">
                 Cerca piatti e bevande
@@ -658,7 +676,11 @@ const Cassa: React.FC = () => {
               </div>
             </div>
 
-            <div className="category-filters" role="tablist" aria-label="Filtri per categoria">
+            <div
+              className="category-filters"
+              role="tablist"
+              aria-label="Filtri per categoria"
+            >
               <button
                 role="tab"
                 aria-selected={selectedCategory === 'all'}
@@ -686,17 +708,19 @@ const Cassa: React.FC = () => {
           {/* Catalogo Menu */}
           <section className="menu-catalog" aria-label="Catalogo menu">
             <h2>📋 Catalogo Menu</h2>
-            <div 
-              id="menu-catalog" 
-              className="menu-grid" 
+            <div
+              id="menu-catalog"
+              className="menu-grid"
               role="tabpanel"
               aria-label={`Menu categoria: ${selectedCategory === 'all' ? 'Tutte' : categories.find(c => c.id === selectedCategory)?.nome || 'Sconosciuta'}`}
             >
               {filteredMenuItems.map(item => {
                 const availability = getItemAvailability(item);
                 const categoryName = getCategoryName(item.categoria_id);
-                const isUnlimited = item.componenti.some(comp => 
-                  menuComponents.find(mc => mc.id === comp.component_id)?.is_illimitato
+                const isUnlimited = item.componenti.some(
+                  comp =>
+                    menuComponents.find(mc => mc.id === comp.component_id)
+                      ?.is_illimitato
                 );
                 const isSoldOut = !availability.available;
 
@@ -705,7 +729,9 @@ const Cassa: React.FC = () => {
                   'menu-item-card',
                   isSoldOut && 'item-sold-out',
                   isUnlimited && 'item-unlimited',
-                ].filter(Boolean).join(' ');
+                ]
+                  .filter(Boolean)
+                  .join(' ');
 
                 return (
                   <article
@@ -716,8 +742,11 @@ const Cassa: React.FC = () => {
                     aria-label={`${item.nome}, ${formatPrice(item.prezzo)}, ${availability.available ? 'Disponibile' : 'Non disponibile'}`}
                     aria-describedby={`item-desc-${item.id}`}
                     onClick={() => availability.available && addToCart(item)}
-                    onKeyDown={(e) => {
-                      if ((e.key === 'Enter' || e.key === ' ') && availability.available) {
+                    onKeyDown={e => {
+                      if (
+                        (e.key === 'Enter' || e.key === ' ') &&
+                        availability.available
+                      ) {
                         e.preventDefault();
                         addToCart(item);
                       }
@@ -725,14 +754,20 @@ const Cassa: React.FC = () => {
                   >
                     {/* Badge stati speciali */}
                     {isUnlimited && (
-                      <div className="unlimited-badge" aria-label="Componenti illimitati">
+                      <div
+                        className="unlimited-badge"
+                        aria-label="Componenti illimitati"
+                      >
                         ∞ Illimitato
                       </div>
                     )}
 
                     <div className="item-header">
                       <h3 className="item-name">{item.nome}</h3>
-                      <span className="item-price" aria-label={`Prezzo: ${formatPrice(item.prezzo)}`}>
+                      <span
+                        className="item-price"
+                        aria-label={`Prezzo: ${formatPrice(item.prezzo)}`}
+                      >
                         €{(item.prezzo / 100).toFixed(2)}
                       </span>
                     </div>
@@ -742,38 +777,59 @@ const Cassa: React.FC = () => {
                     </p>
 
                     <div className="item-meta">
-                      <span className="item-category" aria-label={`Categoria: ${categoryName}`}>
+                      <span
+                        className="item-category"
+                        aria-label={`Categoria: ${categoryName}`}
+                      >
                         {categoryName}
                       </span>
-                      <span className="item-time" aria-label={`Tempo di preparazione: ${item.tempo_preparazione} minuti`}>
+                      <span
+                        className="item-time"
+                        aria-label={`Tempo di preparazione: ${item.tempo_preparazione} minuti`}
+                      >
                         ⏱️ {item.tempo_preparazione}min
                       </span>
                     </div>
 
-                    <div className="item-flags" role="list" aria-label="Caratteristiche dietetiche">
+                    <div
+                      className="item-flags"
+                      role="list"
+                      aria-label="Caratteristiche dietetiche"
+                    >
                       {item.is_vegetariano && (
-                        <span className="flag veg" role="listitem" aria-label="Vegetariano">
+                        <span
+                          className="flag veg"
+                          role="listitem"
+                          aria-label="Vegetariano"
+                        >
                           🌱 Veg
                         </span>
                       )}
                       {item.is_vegano && (
-                        <span className="flag vegan" role="listitem" aria-label="Vegano">
+                        <span
+                          className="flag vegan"
+                          role="listitem"
+                          aria-label="Vegano"
+                        >
                           🌿 Vegan
                         </span>
                       )}
                     </div>
 
                     {!availability.available && (
-                      <div className="unavailable-badge" aria-label={`Non disponibile: ${availability.reason}`}>
+                      <div
+                        className="unavailable-badge"
+                        aria-label={`Non disponibile: ${availability.reason}`}
+                      >
                         ❌ {availability.reason}
                       </div>
                     )}
 
                     {availability.available && (
-                      <button 
+                      <button
                         className="add-to-cart-btn btn-large btn-success"
                         aria-label={`Aggiungi ${item.nome} al carrello`}
-                        onClick={(e) => {
+                        onClick={e => {
                           e.stopPropagation();
                           addToCart(item);
                         }}
@@ -785,17 +841,24 @@ const Cassa: React.FC = () => {
                 );
               })}
             </div>
-            
+
             {filteredMenuItems.length === 0 && (
               <div className="no-items" role="status" aria-live="polite">
-                <p>Nessun articolo trovato per la ricerca o categoria selezionata.</p>
+                <p>
+                  Nessun articolo trovato per la ricerca o categoria
+                  selezionata.
+                </p>
               </div>
             )}
           </section>
         </main>
 
         {/* Sidebar Carrello */}
-        <aside className="cassa-sidebar" role="complementary" aria-label="Carrello della spesa">
+        <aside
+          className="cassa-sidebar"
+          role="complementary"
+          aria-label="Carrello della spesa"
+        >
           <section className="cart-section">
             <h2>🛒 Carrello ({cart.items.length})</h2>
 
@@ -806,21 +869,27 @@ const Cassa: React.FC = () => {
               </div>
             ) : (
               <>
-                <div className="cart-items" role="list" aria-label="Articoli nel carrello">
+                <div
+                  className="cart-items"
+                  role="list"
+                  aria-label="Articoli nel carrello"
+                >
                   {cart.items.map((item, index) => {
                     // Determina le classi CSS per gli stati visivi
                     const itemClasses = [
                       'cart-item',
                       item.isStaff && 'item-staff',
                       item.isPriority && 'item-priority',
-                    ].filter(Boolean).join(' ');
+                    ]
+                      .filter(Boolean)
+                      .join(' ');
 
                     const itemPrice = item.isStaff ? 0 : item.menuItem.prezzo;
                     const lineTotal = itemPrice * item.quantity;
 
                     return (
-                      <article 
-                        key={index} 
+                      <article
+                        key={index}
                         className={itemClasses}
                         role="listitem"
                         aria-label={`${item.menuItem.nome}, quantità ${item.quantity}, totale ${formatPrice(lineTotal)}`}
@@ -829,19 +898,29 @@ const Cassa: React.FC = () => {
                           <h4>{item.menuItem.nome}</h4>
                           <div className="cart-item-flags">
                             {item.isStaff && (
-                              <span className="staff-badge" aria-label="Ordine staff">
+                              <span
+                                className="staff-badge"
+                                aria-label="Ordine staff"
+                              >
                                 👥 Staff
                               </span>
                             )}
                             {item.isPriority && (
-                              <span className="priority-badge" aria-label="Ordine prioritario">
+                              <span
+                                className="priority-badge"
+                                aria-label="Ordine prioritario"
+                              >
                                 ⚡ Priorità
                               </span>
                             )}
                           </div>
                         </div>
 
-                        <div className="cart-item-controls" role="group" aria-label={`Controlli per ${item.menuItem.nome}`}>
+                        <div
+                          className="cart-item-controls"
+                          role="group"
+                          aria-label={`Controlli per ${item.menuItem.nome}`}
+                        >
                           <div className="quantity-controls">
                             <button
                               onClick={() =>
@@ -853,7 +932,10 @@ const Cassa: React.FC = () => {
                             >
                               ➖
                             </button>
-                            <span className="quantity" aria-label={`Quantità: ${item.quantity}`}>
+                            <span
+                              className="quantity"
+                              aria-label={`Quantità: ${item.quantity}`}
+                            >
                               {item.quantity}
                             </span>
                             <button
@@ -867,7 +949,10 @@ const Cassa: React.FC = () => {
                             </button>
                           </div>
 
-                          <span className="item-total" aria-label={`Totale riga: ${formatPrice(lineTotal)}`}>
+                          <span
+                            className="item-total"
+                            aria-label={`Totale riga: ${formatPrice(lineTotal)}`}
+                          >
                             €{(lineTotal / 100).toFixed(2)}
                           </span>
                         </div>
@@ -889,11 +974,16 @@ const Cassa: React.FC = () => {
                             aria-describedby={`notes-help-${index}`}
                           />
                           <div id={`notes-help-${index}`} className="sr-only">
-                            Aggiungi note speciali per questo articolo (max 200 caratteri)
+                            Aggiungi note speciali per questo articolo (max 200
+                            caratteri)
                           </div>
                         </div>
 
-                        <div className="cart-item-actions" role="group" aria-label={`Opzioni per ${item.menuItem.nome}`}>
+                        <div
+                          className="cart-item-actions"
+                          role="group"
+                          aria-label={`Opzioni per ${item.menuItem.nome}`}
+                        >
                           <button
                             onClick={() => toggleCartItemFlag(index, 'staff')}
                             className={`flag-btn btn-large ${item.isStaff ? 'active btn-warning' : 'btn-secondary'}`}
@@ -903,14 +993,16 @@ const Cassa: React.FC = () => {
                             👥 Staff
                           </button>
                           <button
-                            onClick={() => toggleCartItemFlag(index, 'priority')}
+                            onClick={() =>
+                              toggleCartItemFlag(index, 'priority')
+                            }
                             className={`flag-btn btn-large ${item.isPriority ? 'active btn-warning' : 'btn-secondary'}`}
                             aria-pressed={item.isPriority}
                             aria-label={`${item.isPriority ? 'Rimuovi' : 'Aggiungi'} flag priorità per ${item.menuItem.nome}`}
                           >
                             ⚡ Priorità
                           </button>
-                          
+
                           <button
                             onClick={() => removeFromCart(index)}
                             className="remove-btn btn-large btn-danger"
@@ -924,10 +1016,17 @@ const Cassa: React.FC = () => {
                   })}
                 </div>
 
-                <footer className="cart-summary" role="contentinfo" aria-label="Riepilogo carrello">
+                <footer
+                  className="cart-summary"
+                  role="contentinfo"
+                  aria-label="Riepilogo carrello"
+                >
                   <div className="cart-total" aria-live="polite">
                     <span>Totale:</span>
-                    <span className="total-amount" aria-label={`Totale carrello: ${formatPrice(cart.total)}`}>
+                    <span
+                      className="total-amount"
+                      aria-label={`Totale carrello: ${formatPrice(cart.total)}`}
+                    >
                       €{(cart.total / 100).toFixed(2)}
                     </span>
                   </div>
