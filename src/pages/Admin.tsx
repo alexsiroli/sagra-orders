@@ -18,6 +18,8 @@ import {
   MenuItem,
   Category,
   SystemStats,
+  Order,
+  OrderLine,
 } from '../types/dataModel';
 import './Admin.css';
 
@@ -45,7 +47,7 @@ const Admin: React.FC = () => {
 
   // State per UI
   const [activeTab, setActiveTab] = useState<
-    'items' | 'components' | 'inventory' | 'stats'
+    'items' | 'components' | 'inventory' | 'stats' | 'orders'
   >('items');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,6 +82,14 @@ const Admin: React.FC = () => {
     is_disponibile: true,
   });
 
+  // State per ordini e ricerca
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [orderLines, setOrderLines] = useState<OrderLine[]>([]);
+  const [searchProgressivo, setSearchProgressivo] = useState('');
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [orderAction, setOrderAction] = useState<'view' | 'edit' | 'cancel'>('view');
+
   // Carica dati iniziali
   useEffect(() => {
     loadInitialData();
@@ -102,6 +112,7 @@ const Admin: React.FC = () => {
         componentsSnapshot,
         itemsSnapshot,
         statsSnapshot,
+        ordersSnapshot,
       ] = await Promise.all([
         getDocs(query(collection(db, 'categories'), orderBy('ordine', 'asc'))),
         getDocs(
@@ -109,6 +120,7 @@ const Admin: React.FC = () => {
         ),
         getDocs(query(collection(db, 'menu_items'), orderBy('nome', 'asc'))),
         getDocs(collection(db, 'stats')),
+        getDocs(query(collection(db, 'orders'), orderBy('created_at', 'desc'))),
       ]);
 
       setCategories(
@@ -126,6 +138,28 @@ const Admin: React.FC = () => {
           doc => ({ ...doc.data(), id: doc.id }) as MenuItem
         )
       );
+
+      // Carica ordini e order lines
+      setOrders(
+        ordersSnapshot.docs.map(
+          doc => ({ ...doc.data(), id: doc.id }) as Order
+        )
+      );
+
+      // Carica order lines per tutti gli ordini
+      const orderIds = ordersSnapshot.docs.map(doc => doc.id);
+      if (orderIds.length > 0) {
+        const orderLinesQuery = query(
+          collection(db, 'order_lines'),
+          where('order_id', 'in', orderIds)
+        );
+        const orderLinesSnapshot = await getDocs(orderLinesQuery);
+        setOrderLines(
+          orderLinesSnapshot.docs.map(
+            doc => ({ ...doc.data(), id: doc.id }) as OrderLine
+          )
+        );
+      }
 
       // Trova statistiche sistema
       const systemStatsDoc = statsSnapshot.docs.find(
@@ -170,10 +204,23 @@ const Admin: React.FC = () => {
       setMenuItems(itemsData);
     });
 
+    // Listener per ordini
+    const ordersQuery = query(
+      collection(db, 'orders'),
+      orderBy('created_at', 'desc')
+    );
+    const unsubscribeOrders = onSnapshot(ordersQuery, snapshot => {
+      const ordersData = snapshot.docs.map(
+        doc => ({ ...doc.data(), id: doc.id }) as Order
+      );
+      setOrders(ordersData);
+    });
+
     // Cleanup
     return () => {
       unsubscribeComponents();
       unsubscribeItems();
+      unsubscribeOrders();
     };
   };
 
@@ -391,6 +438,81 @@ const Admin: React.FC = () => {
     }
   };
 
+  // Funzioni per gestione ordini
+  const searchOrderByProgressivo = (progressivo: string) => {
+    if (!progressivo.trim()) {
+      setSearchProgressivo('');
+      return;
+    }
+    setSearchProgressivo(progressivo.trim());
+  };
+
+  const getFilteredOrders = () => {
+    if (!searchProgressivo) return orders;
+    return orders.filter(order => 
+      order.progressivo.toString().includes(searchProgressivo)
+    );
+  };
+
+  const openOrderModal = (order: Order, action: 'view' | 'edit' | 'cancel') => {
+    setSelectedOrder(order);
+    setOrderAction(action);
+    setShowOrderModal(true);
+  };
+
+  const getOrderLines = (orderId: string) => {
+    return orderLines.filter(line => line.order_id === orderId);
+  };
+
+  const canModifyOrder = (order: Order) => {
+    return order.stato === 'in_attesa' || order.stato === 'ordinato';
+  };
+
+  const cancelOrder = async (order: Order) => {
+    if (!canModifyOrder(order)) {
+      setError('Non è possibile annullare questo ordine');
+      return;
+    }
+
+    try {
+      const batch = writeBatch(db);
+      
+      // Aggiorna stato ordine
+      batch.update(doc(db, 'orders', order.id), {
+        stato: 'cancellato',
+        updated_at: Timestamp.now(),
+      });
+
+      // Riaccredita scorte per ogni componente
+      const orderLinesForOrder = getOrderLines(order.id);
+      for (const line of orderLinesForOrder) {
+        const component = menuComponents.find(c => c.id === line.menu_item_id);
+        if (component) {
+          batch.update(doc(db, 'menu_components', component.id), {
+            giacenza: component.giacenza + line.quantita,
+            is_disponibile: true,
+            updated_at: Timestamp.now(),
+          });
+        }
+      }
+
+      // Aggiorna statistiche
+      if (systemStats) {
+        batch.update(doc(db, 'stats', 'system'), {
+          totale_ordini_cancellati_oggi: systemStats.totale_ordini_cancellati_oggi + 1,
+          updated_at: Timestamp.now(),
+        });
+      }
+
+      await batch.commit();
+      setShowOrderModal(false);
+      setSelectedOrder(null);
+    } catch (err) {
+      console.error('Errore durante l\'annullamento ordine:', err);
+      setError('Errore durante l\'annullamento dell\'ordine');
+    }
+  };
+
   if (loading) {
     return (
       <div className="admin-container">
@@ -489,6 +611,12 @@ const Admin: React.FC = () => {
           onClick={() => setActiveTab('stats')}
         >
           📊 Statistiche
+        </button>
+        <button
+          className={`tab-button ${activeTab === 'orders' ? 'active' : ''}`}
+          onClick={() => setActiveTab('orders')}
+        >
+          📋 Ordini
         </button>
       </div>
 
@@ -719,10 +847,12 @@ const Admin: React.FC = () => {
                 <div className="stats-card">
                   <h3>💰 Fatturato</h3>
                   <div className="stats-details">
-                    <p>
-                      <strong>Oggi:</strong> €
-                      {(systemStats.fatturato_oggi / 100).toFixed(2)}
-                    </p>
+                    <div className="stats-details">
+                      <p>
+                        <strong>Oggi:</strong> €
+                        {(systemStats.fatturato_oggi / 100).toFixed(2)}
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <div className="stats-card">
@@ -742,6 +872,90 @@ const Admin: React.FC = () => {
             ) : (
               <p>Nessuna statistica disponibile</p>
             )}
+          </div>
+        )}
+
+        {activeTab === 'orders' && (
+          <div className="tab-content">
+            <div className="content-header">
+              <h2>Gestione Ordini</h2>
+              <div className="search-container">
+                <input
+                  type="text"
+                  placeholder="Cerca per progressivo..."
+                  value={searchProgressivo}
+                  onChange={(e) => searchOrderByProgressivo(e.target.value)}
+                  className="search-input"
+                />
+                <button className="search-button">
+                  🔍 Cerca
+                </button>
+              </div>
+            </div>
+
+            <div className="orders-list">
+              {getFilteredOrders().map(order => (
+                <div key={order.id} className={`order-card ${order.stato}`}>
+                  <div className="order-header">
+                    <div className="order-info">
+                      <h3>Ordine #{order.progressivo}</h3>
+                      <div className="order-meta">
+                        <span className={`status-badge ${order.stato}`}>
+                          {order.stato === 'in_attesa' && '⏳ In Attesa'}
+                          {order.stato === 'ordinato' && '📋 Ordinato'}
+                          {order.stato === 'pronto' && '✅ Pronto'}
+                          {order.stato === 'completato' && '🎉 Completato'}
+                          {order.stato === 'cancellato' && '❌ Cancellato'}
+                        </span>
+                        <span className="order-time">
+                          {new Date(order.created_at.toDate()).toLocaleString('it-IT')}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="order-actions">
+                      <button
+                        className="view-button"
+                        onClick={() => openOrderModal(order, 'view')}
+                        title="Visualizza dettagli"
+                      >
+                        👁️
+                      </button>
+                      {canModifyOrder(order) && (
+                        <>
+                          <button
+                            className="edit-button"
+                            onClick={() => openOrderModal(order, 'edit')}
+                            title="Modifica ordine"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            className="cancel-button"
+                            onClick={() => openOrderModal(order, 'cancel')}
+                            title="Annulla ordine"
+                          >
+                            🗑️
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className="order-details">
+                    <p><strong>Cliente:</strong> {order.cliente}</p>
+                    <p><strong>Totale:</strong> €{(order.totale / 100).toFixed(2)}</p>
+                    {order.note && <p><strong>Note:</strong> {order.note}</p>}
+                    {order.is_prioritario && (
+                      <span className="priority-badge">🚨 Priorità</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {getFilteredOrders().length === 0 && (
+                <div className="no-orders">
+                  <p>Nessun ordine trovato</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -1049,6 +1263,112 @@ const Admin: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Dettaglio Ordine */}
+      {showOrderModal && selectedOrder && (
+        <div className="modal-overlay" onClick={() => setShowOrderModal(false)}>
+          <div className="modal-content order-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>
+                {orderAction === 'view' && 'Dettaglio Ordine'}
+                {orderAction === 'edit' && 'Modifica Ordine'}
+                {orderAction === 'cancel' && 'Annulla Ordine'}
+                {' '}#{selectedOrder.progressivo}
+              </h3>
+              <button className="close-button" onClick={() => setShowOrderModal(false)}>
+                ✕
+              </button>
+            </div>
+
+            <div className="modal-form">
+              <div className="order-summary">
+                <div className="order-info-grid">
+                  <div className="info-item">
+                    <label>Stato:</label>
+                    <span className={`status-badge ${selectedOrder.stato}`}>
+                      {selectedOrder.stato === 'in_attesa' && '⏳ In Attesa'}
+                      {selectedOrder.stato === 'ordinato' && '📋 Ordinato'}
+                      {selectedOrder.stato === 'pronto' && '✅ Pronto'}
+                      {selectedOrder.stato === 'completato' && '🎉 Completato'}
+                      {selectedOrder.stato === 'cancellato' && '❌ Cancellato'}
+                    </span>
+                  </div>
+                  <div className="info-item">
+                    <label>Cliente:</label>
+                    <span>{selectedOrder.cliente}</span>
+                  </div>
+                  <div className="info-item">
+                    <label>Totale:</label>
+                    <span className="total-amount">€{(selectedOrder.totale / 100).toFixed(2)}</span>
+                  </div>
+                  <div className="info-item">
+                    <label>Data Creazione:</label>
+                    <span>{new Date(selectedOrder.created_at.toDate()).toLocaleString('it-IT')}</span>
+                  </div>
+                  {selectedOrder.note && (
+                    <div className="info-item full-width">
+                      <label>Note:</label>
+                      <span>{selectedOrder.note}</span>
+                    </div>
+                  )}
+                </div>
+
+                {selectedOrder.is_prioritario && (
+                  <div className="priority-warning">
+                    🚨 <strong>ORDINE PRIORITARIO</strong>
+                  </div>
+                )}
+              </div>
+
+              <div className="order-lines-section">
+                <h4>Righe Ordine</h4>
+                <div className="order-lines-list">
+                  {getOrderLines(selectedOrder.id).map(line => (
+                    <div key={line.id} className="order-line-item">
+                      <div className="line-header">
+                        <span className="item-name">{line.menu_item_name}</span>
+                        <span className="line-total">€{(line.prezzo_totale / 100).toFixed(2)}</span>
+                      </div>
+                      <div className="line-details">
+                        <span className="quantity">x{line.quantita}</span>
+                        <span className="unit-price">€{(line.prezzo_unitario / 100).toFixed(2)} cad.</span>
+                        {line.note && <span className="line-note">Note: {line.note}</span>}
+                        {line.is_staff && <span className="staff-badge">👥 Staff</span>}
+                        {line.is_priority && <span className="priority-badge">🚨 Priorità</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {orderAction === 'cancel' && canModifyOrder(selectedOrder) && (
+                <div className="cancel-warning">
+                  ⚠️ <strong>Attenzione:</strong> Annullando questo ordine, le scorte verranno riaccreditate automaticamente.
+                </div>
+              )}
+
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="cancel-button"
+                  onClick={() => setShowOrderModal(false)}
+                >
+                  Chiudi
+                </button>
+                {orderAction === 'cancel' && canModifyOrder(selectedOrder) && (
+                  <button
+                    type="button"
+                    className="danger-button"
+                    onClick={() => cancelOrder(selectedOrder)}
+                  >
+                    🗑️ Conferma Annullamento
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}
