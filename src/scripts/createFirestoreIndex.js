@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { config } from 'dotenv';
@@ -14,7 +15,7 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const _DB = getFirestore(app); // Prefisso underscore per evitare warning ESLint
 
 console.log('🚀 Script creazione indice Firestore mancante');
 console.log('📋 Questo script aiuta a creare l\'indice per la query della vista Cucina');
