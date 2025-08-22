@@ -88,7 +88,9 @@ const Admin: React.FC = () => {
   const [searchProgressivo, setSearchProgressivo] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showOrderModal, setShowOrderModal] = useState(false);
-  const [orderAction, setOrderAction] = useState<'view' | 'edit' | 'cancel'>('view');
+  const [orderAction, setOrderAction] = useState<'view' | 'edit' | 'cancel'>(
+    'view'
+  );
 
   // Carica dati iniziali
   useEffect(() => {
@@ -141,9 +143,7 @@ const Admin: React.FC = () => {
 
       // Carica ordini e order lines
       setOrders(
-        ordersSnapshot.docs.map(
-          doc => ({ ...doc.data(), id: doc.id }) as Order
-        )
+        ordersSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }) as Order)
       );
 
       // Carica order lines per tutti gli ordini
@@ -449,7 +449,7 @@ const Admin: React.FC = () => {
 
   const getFilteredOrders = () => {
     if (!searchProgressivo) return orders;
-    return orders.filter(order => 
+    return orders.filter(order =>
       order.progressivo.toString().includes(searchProgressivo)
     );
   };
@@ -476,7 +476,7 @@ const Admin: React.FC = () => {
 
     try {
       const batch = writeBatch(db);
-      
+
       // Aggiorna stato ordine
       batch.update(doc(db, 'orders', order.id), {
         stato: 'cancellato',
@@ -499,7 +499,8 @@ const Admin: React.FC = () => {
       // Aggiorna statistiche
       if (systemStats) {
         batch.update(doc(db, 'stats', 'system'), {
-          totale_ordini_cancellati_oggi: systemStats.totale_ordini_cancellati_oggi + 1,
+          totale_ordini_cancellati_oggi:
+            systemStats.totale_ordini_cancellati_oggi + 1,
           updated_at: Timestamp.now(),
         });
       }
@@ -508,8 +509,8 @@ const Admin: React.FC = () => {
       setShowOrderModal(false);
       setSelectedOrder(null);
     } catch (err) {
-      console.error('Errore durante l\'annullamento ordine:', err);
-      setError('Errore durante l\'annullamento dell\'ordine');
+      console.error("Errore durante l'annullamento ordine:", err);
+      setError("Errore durante l'annullamento dell'ordine");
     }
   };
 
@@ -884,12 +885,10 @@ const Admin: React.FC = () => {
                   type="text"
                   placeholder="Cerca per progressivo..."
                   value={searchProgressivo}
-                  onChange={(e) => searchOrderByProgressivo(e.target.value)}
+                  onChange={e => searchOrderByProgressivo(e.target.value)}
                   className="search-input"
                 />
-                <button className="search-button">
-                  🔍 Cerca
-                </button>
+                <button className="search-button">🔍 Cerca</button>
               </div>
             </div>
 
@@ -908,7 +907,9 @@ const Admin: React.FC = () => {
                           {order.stato === 'cancellato' && '❌ Cancellato'}
                         </span>
                         <span className="order-time">
-                          {new Date(order.created_at.toDate()).toLocaleString('it-IT')}
+                          {new Date(order.created_at.toDate()).toLocaleString(
+                            'it-IT'
+                          )}
                         </span>
                       </div>
                     </div>
@@ -941,9 +942,18 @@ const Admin: React.FC = () => {
                     </div>
                   </div>
                   <div className="order-details">
-                    <p><strong>Cliente:</strong> {order.cliente}</p>
-                    <p><strong>Totale:</strong> €{(order.totale / 100).toFixed(2)}</p>
-                    {order.note && <p><strong>Note:</strong> {order.note}</p>}
+                    <p>
+                      <strong>Cliente:</strong> {order.cliente}
+                    </p>
+                    <p>
+                      <strong>Totale:</strong> €
+                      {(order.totale / 100).toFixed(2)}
+                    </p>
+                    {order.note && (
+                      <p>
+                        <strong>Note:</strong> {order.note}
+                      </p>
+                    )}
                     {order.is_prioritario && (
                       <span className="priority-badge">🚨 Priorità</span>
                     )}
@@ -1270,15 +1280,21 @@ const Admin: React.FC = () => {
       {/* Modal Dettaglio Ordine */}
       {showOrderModal && selectedOrder && (
         <div className="modal-overlay" onClick={() => setShowOrderModal(false)}>
-          <div className="modal-content order-modal" onClick={e => e.stopPropagation()}>
+          <div
+            className="modal-content order-modal"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="modal-header">
               <h3>
                 {orderAction === 'view' && 'Dettaglio Ordine'}
                 {orderAction === 'edit' && 'Modifica Ordine'}
-                {orderAction === 'cancel' && 'Annulla Ordine'}
-                {' '}#{selectedOrder.progressivo}
+                {orderAction === 'cancel' && 'Annulla Ordine'} #
+                {selectedOrder.progressivo}
               </h3>
-              <button className="close-button" onClick={() => setShowOrderModal(false)}>
+              <button
+                className="close-button"
+                onClick={() => setShowOrderModal(false)}
+              >
                 ✕
               </button>
             </div>
@@ -1302,11 +1318,17 @@ const Admin: React.FC = () => {
                   </div>
                   <div className="info-item">
                     <label>Totale:</label>
-                    <span className="total-amount">€{(selectedOrder.totale / 100).toFixed(2)}</span>
+                    <span className="total-amount">
+                      €{(selectedOrder.totale / 100).toFixed(2)}
+                    </span>
                   </div>
                   <div className="info-item">
                     <label>Data Creazione:</label>
-                    <span>{new Date(selectedOrder.created_at.toDate()).toLocaleString('it-IT')}</span>
+                    <span>
+                      {new Date(
+                        selectedOrder.created_at.toDate()
+                      ).toLocaleString('it-IT')}
+                    </span>
                   </div>
                   {selectedOrder.note && (
                     <div className="info-item full-width">
@@ -1330,14 +1352,24 @@ const Admin: React.FC = () => {
                     <div key={line.id} className="order-line-item">
                       <div className="line-header">
                         <span className="item-name">{line.menu_item_name}</span>
-                        <span className="line-total">€{(line.prezzo_totale / 100).toFixed(2)}</span>
+                        <span className="line-total">
+                          €{(line.prezzo_totale / 100).toFixed(2)}
+                        </span>
                       </div>
                       <div className="line-details">
                         <span className="quantity">x{line.quantita}</span>
-                        <span className="unit-price">€{(line.prezzo_unitario / 100).toFixed(2)} cad.</span>
-                        {line.note && <span className="line-note">Note: {line.note}</span>}
-                        {line.is_staff && <span className="staff-badge">👥 Staff</span>}
-                        {line.is_priority && <span className="priority-badge">🚨 Priorità</span>}
+                        <span className="unit-price">
+                          €{(line.prezzo_unitario / 100).toFixed(2)} cad.
+                        </span>
+                        {line.note && (
+                          <span className="line-note">Note: {line.note}</span>
+                        )}
+                        {line.is_staff && (
+                          <span className="staff-badge">👥 Staff</span>
+                        )}
+                        {line.is_priority && (
+                          <span className="priority-badge">🚨 Priorità</span>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -1346,7 +1378,8 @@ const Admin: React.FC = () => {
 
               {orderAction === 'cancel' && canModifyOrder(selectedOrder) && (
                 <div className="cancel-warning">
-                  ⚠️ <strong>Attenzione:</strong> Annullando questo ordine, le scorte verranno riaccreditate automaticamente.
+                  ⚠️ <strong>Attenzione:</strong> Annullando questo ordine, le
+                  scorte verranno riaccreditate automaticamente.
                 </div>
               )}
 
