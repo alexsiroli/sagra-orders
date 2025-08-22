@@ -55,7 +55,7 @@ describe('Format Validation', () => {
 
   test('should handle quantity validation', () => {
     const isValidQuantity = (qty: number) => qty > 0 && Number.isInteger(qty);
-    
+
     expect(isValidQuantity(1)).toBe(true);
     expect(isValidQuantity(5)).toBe(true);
     expect(isValidQuantity(0)).toBe(false);
@@ -74,23 +74,26 @@ describe('Basic Calculations', () => {
       { price: 800, quantity: 2 }, // €8.00 x 2 = €16.00
       { price: 400, quantity: 1 }, // €4.00 x 1 = €4.00
     ];
-    
-    const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+    const total = items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
     expect(total).toBe(2000); // €20.00 in cents
   });
 
   test('should calculate change', () => {
     const total = 1250; // €12.50
-    const paid = 1500;  // €15.00
+    const paid = 1500; // €15.00
     const change = paid - total;
-    
+
     expect(change).toBe(250); // €2.50 in cents
   });
 
   test('should handle staff discount', () => {
     const regularPrice = 800; // €8.00
-    const staffPrice = 0;     // Free for staff
-    
+    const staffPrice = 0; // Free for staff
+
     expect(staffPrice).toBe(0);
     expect(regularPrice).toBeGreaterThan(0);
   });
@@ -103,7 +106,7 @@ describe('Basic Calculations', () => {
 describe('Mock Integration', () => {
   test('should handle async operations', async () => {
     const mockAsyncFunction = async (value: number) => {
-      return new Promise<number>((resolve) => {
+      return new Promise<number>(resolve => {
         setTimeout(() => resolve(value * 2), 10);
       });
     };
@@ -150,8 +153,8 @@ describe('CSV Export Functionality', () => {
     ];
 
     const csvHeader = 'ID,Nome,Prezzo,Categoria';
-    const csvRows = data.map(item => 
-      `${item.id},${item.name},${item.price},${item.category}`
+    const csvRows = data.map(
+      item => `${item.id},${item.name},${item.price},${item.category}`
     );
     const csvContent = [csvHeader, ...csvRows].join('\n');
 
@@ -168,7 +171,7 @@ describe('CSV Export Functionality', () => {
 describe('Offline Queue Simulation', () => {
   test('should handle offline order queuing', () => {
     const offlineQueue: any[] = [];
-    
+
     const queueOrder = (order: any) => {
       offlineQueue.push({
         ...order,
@@ -187,9 +190,9 @@ describe('Offline Queue Simulation', () => {
 
   test('should simulate duplicate prevention', () => {
     const processedOrders = new Set(['order-1', 'order-2']);
-    
+
     const isDuplicate = (orderId: string) => processedOrders.has(orderId);
-    
+
     expect(isDuplicate('order-1')).toBe(true);
     expect(isDuplicate('order-3')).toBe(false);
   });
@@ -202,10 +205,10 @@ describe('Offline Queue Simulation', () => {
 describe('Business Rules Simulation', () => {
   test('should validate order status transitions', () => {
     const validTransitions: Record<string, string[]> = {
-      'pending': ['ready', 'cancelled'],
-      'ready': ['completed'],
-      'completed': [],
-      'cancelled': [],
+      pending: ['ready', 'cancelled'],
+      ready: ['completed'],
+      completed: [],
+      cancelled: [],
     };
 
     const canTransition = (from: string, to: string): boolean => {
@@ -220,15 +223,17 @@ describe('Business Rules Simulation', () => {
 
   test('should handle stock validation', () => {
     const mockInventory = {
-      'pasta': { stock: 50, minimum: 10 },
-      'birra': { stock: 5, minimum: 20 },
+      pasta: { stock: 50, minimum: 10 },
+      birra: { stock: 5, minimum: 20 },
     };
 
     const checkStock = (itemId: string, quantity: number) => {
       const item = mockInventory[itemId as keyof typeof mockInventory];
       if (!item) return { available: false, reason: 'Item not found' };
-      if (item.stock < quantity) return { available: false, reason: 'Insufficient stock' };
-      if (item.stock - quantity <= item.minimum) return { available: true, warning: 'Low stock' };
+      if (item.stock < quantity)
+        return { available: false, reason: 'Insufficient stock' };
+      if (item.stock - quantity <= item.minimum)
+        return { available: true, warning: 'Low stock' };
       return { available: true };
     };
 
