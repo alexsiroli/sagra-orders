@@ -19,6 +19,15 @@ import {
   OrderLine,
 } from '../types/dataModel';
 import { offlineQueueManager } from '../utils/offlineQueue';
+import {
+  validateQuantity,
+  validateCartStock,
+  validateNote,
+  calculateOrderTotal,
+  calculateChange,
+  validateCompleteOrder,
+  formatPrice,
+} from '../utils/validations';
 import './Cassa.css';
 
 // ============================================================================
@@ -86,7 +95,7 @@ const Cassa: React.FC = () => {
   }, [cart.items]);
 
   useEffect(() => {
-    calculateChange();
+    calculateChangeAmount();
   }, [cart.total, cart.received]);
 
   useEffect(() => {
@@ -182,6 +191,20 @@ const Cassa: React.FC = () => {
   // ============================================================================
 
   const addToCart = (menuItem: MenuItem) => {
+    // Calcola quantità attuale nel carrello per questo item
+    const existingItem = cart.items.find(
+      item => item.menuItem.id === menuItem.id && !item.isStaff && !item.isPriority
+    );
+    const currentQuantity = existingItem?.quantity || 0;
+    
+    // Valida se è possibile aggiungere una unità
+    const validation = validateQuantity(1, menuItem, menuComponents, currentQuantity);
+    
+    if (!validation.isValid) {
+      alert(`❌ Impossibile aggiungere: ${validation.errors.join(', ')}`);
+      return;
+    }
+
     setCart(prevCart => {
       const existingItem = prevCart.items.find(
         item =>
@@ -265,17 +288,24 @@ const Cassa: React.FC = () => {
   };
 
   const calculateCartTotal = () => {
-    const total = cart.items.reduce((sum, item) => {
-      const itemTotal = item.isStaff ? 0 : item.menuItem.prezzo * item.quantity;
-      return sum + itemTotal;
-    }, 0);
+    const cartItems = cart.items.map(item => ({
+      menuItem: item.menuItem,
+      quantity: item.quantity,
+      notes: item.notes,
+      isStaff: item.isStaff,
+      isPriority: item.isPriority,
+    }));
 
-    setCart(prevCart => ({ ...prevCart, total }));
+    const calculation = calculateOrderTotal(cartItems);
+    setCart(prevCart => ({ ...prevCart, total: calculation.total }));
   };
 
-  const calculateChange = () => {
-    const change = Math.max(0, cart.received - cart.total);
-    setCart(prevCart => ({ ...prevCart, change }));
+  const calculateChangeAmount = () => {
+    const changeResult = calculateChange(cart.total, cart.received);
+    setCart(prevCart => ({ 
+      ...prevCart, 
+      change: changeResult.isValid ? changeResult.change : 0 
+    }));
   };
 
   // ============================================================================
@@ -320,7 +350,41 @@ const Cassa: React.FC = () => {
     try {
       setIsProcessingOrder(true);
 
-      // Verifica stock e calcola differenze
+      // Validazione completa ordine
+      const orderValidation = validateCompleteOrder(
+        {
+          cliente: 'Cliente generico',
+          note: cart.items
+            .map(
+              item =>
+                `${item.menuItem.nome} x${item.quantity}${item.notes ? ` - ${item.notes}` : ''}`
+            )
+            .join('; '),
+          cartItems: cart.items.map(item => ({
+            menuItem: item.menuItem,
+            quantity: item.quantity,
+            notes: item.notes,
+            isStaff: item.isStaff,
+            isPriority: item.isPriority,
+          })),
+        },
+        menuComponents
+      );
+
+      if (!orderValidation.isValid) {
+        alert(`❌ Validazione fallita: ${orderValidation.errors.join(', ')}`);
+        return;
+      }
+
+      // Mostra warnings se presenti
+      if (orderValidation.warnings.length > 0) {
+        const proceed = confirm(
+          `⚠️ Attenzione: ${orderValidation.warnings.join(', ')}\nProcedere comunque?`
+        );
+        if (!proceed) return;
+      }
+
+      // Verifica stock aggiornato (backup check)
       const stockCheck = await verifyStock();
       if (!stockCheck.success) {
         alert(`❌ Stock insufficiente: ${stockCheck.message}`);
